@@ -21,6 +21,15 @@ moving as they breathe.
 
 ---
 
+
+## Support this project
+
+If you found this project helpful and want to support its development, consider dropping a tip!
+
+<a href="https://debarghya47.gumroad.com/l/tzbkar" target="_blank">
+  <img src="docs/donate.svg" alt="Support on Gumroad">
+</a>
+
 ## Contents
 
 1. [What it does](#1-what-it-does)
@@ -705,12 +714,5 @@ reported a breathing rate seven times too fast.
 ## License
 
 
-## Support this project
-
-If you found this project helpful and want to support its development, consider dropping a tip! It helps keep the open-source work going.
-
-<a href="https://debarghya47.gumroad.com/l/tzbkar" target="_blank">
-  <img src="docs/donate.svg" alt="Support on Gumroad">
-</a>
 [Apache-2.0](LICENSE). Copyright 2026 The-Masked-Bear
 
