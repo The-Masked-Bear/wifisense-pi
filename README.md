@@ -5,6 +5,7 @@
 [![validate](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/validate.yml/badge.svg)](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/validate.yml)
 [![package](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/package.yml/badge.svg)](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/package.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![Support](https://img.shields.io/badge/Support_Me-Topmate-FF5A5F?style=flat&logo=buy-me-a-coffee&logoColor=white)](https://topmate.io/themaskedbear/)
 
 **See motion, presence and breathing through walls, using nothing but ordinary
 WiFi signals.**
@@ -702,3 +703,11 @@ reported a breathing rate seven times too fast.
 ## License
 
 [Apache-2.0](LICENSE). Copyright 2026 The-Masked-Bear
+
+## Support this project
+
+If you found this project helpful and want to support its development, consider dropping a tip! It helps keep the open-source work going.
+
+<a href="https://topmate.io/themaskedbear/" target="_blank">
+  <img src="https://img.shields.io/badge/Support_Me-Topmate-FF5A5F?style=for-the-badge&logo=buy-me-a-coffee&logoColor=white" alt="Support me on Topmate">
+</a>
