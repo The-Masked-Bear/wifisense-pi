@@ -1,23 +1,21 @@
 // Intersection Observer for Scroll Animations
-document.addEventListener('DOMContentLoaded', () => {
-    const observerOptions = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.15
-    };
+const observerOptions = {
+    root: null,
+    rootMargin: '0px',
+    threshold: 0.15
+};
 
-    const observer = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('active');
-                observer.unobserve(entry.target); // Run once
-            }
-        });
-    }, observerOptions);
+const observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            observer.unobserve(entry.target);
+        }
+    });
+}, observerOptions);
 
-    const revealElements = document.querySelectorAll('.reveal');
-    revealElements.forEach(el => observer.observe(el));
-});
+const revealElements = document.querySelectorAll('.reveal');
+revealElements.forEach(el => observer.observe(el));
 
 // Subtle 3D mouse move effect on hero image
 const heroImage = document.querySelector('.hero-image-wrapper');

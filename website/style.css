@@ -16,7 +16,7 @@
     scroll-behavior: smooth;
 }
 
-body {
+html, body {
     background-color: var(--bg-color);
     color: var(--text-primary);
     font-family: 'Inter', sans-serif;
