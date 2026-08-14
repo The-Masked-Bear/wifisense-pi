@@ -1,0 +1,67 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-pio-${{ hashFiles('firmware/platformio.ini') }}
+
+      - name: Install PlatformIO
+        run: python -m pip install --upgrade pip platformio
+
+      - name: Build firmware
+        working-directory: firmware
+        run: pio run -e esp32s3_csi
+
+      - name: Prepare assets
+        id: prep
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [ "$TAG" = "$GITHUB_REF" ]; then TAG="latest"; fi
+          
+          mkdir -p release_assets
+          cp firmware/.pio/build/esp32s3_csi/firmware.factory.bin "release_assets/wifisense-firmware-${TAG}.bin"
+          cp firmware/.pio/build/esp32s3_csi/firmware.bin release_assets/
+          cp firmware/.pio/build/esp32s3_csi/bootloader.bin release_assets/
+          cp firmware/.pio/build/esp32s3_csi/partitions.bin release_assets/
+          
+          cd release_assets
+          sha256sum * > SHA256SUMS
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release_assets/*
+          generate_release_notes: true
+          body: |
+            Pre-compiled firmware for the ESP32-S3 (16MB flash).
+
+            ### Flashing Instructions
+
+            Using `esptool`, write the merged factory image to offset `0x0`:
+
+            ```sh
+            pip install esptool
+            esptool.py --chip esp32s3 --port /dev/ttyUSB0 --baud 921600 write_flash 0x0 wifisense-firmware-${{ github.ref_name }}.bin
+            ```
+
+            > **Security Note:** This binary contains an all-zero placeholder radio key. If you use a radio link, you must set your own key in `pi/config.json` and compile the firmware yourself. A prebuilt binary cannot carry a private key.

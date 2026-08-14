@@ -1,0 +1,21 @@
+# Docker does NOT honour .gitignore, so everything sensitive has to be named
+# again here.  Without this, a local `docker build` bakes this deployment's
+# radio encryption key and its recorded occupancy history into a published
+# image layer.
+pi/config.json
+firmware/src/secrets.h
+recordings/
+*.csi
+*.db
+*.db-wal
+*.db-shm
+
+# Not needed in the image, and large.
+.venv/
+firmware/.pio/
+firmware/
+.git/
+docs/
+systemd/
+__pycache__/
+*.py[cod]
