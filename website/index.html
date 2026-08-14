@@ -5,70 +5,124 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WiFi Sense | Through-Wall Sensing</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Background Animated Orbs -->
     <div class="glow-orb orb-1"></div>
     <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
 
     <!-- Navigation -->
     <nav class="navbar">
         <div class="logo">WiFi Sense</div>
-        <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="nav-btn">Sponsor Project</a>
+        <div class="nav-links">
+            <a href="https://github.com/The-Masked-Bear/wifisense-pi" target="_blank" class="nav-link">GitHub</a>
+            <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="nav-btn">Sponsor Project</a>
+        </div>
     </nav>
 
     <!-- Hero Section -->
     <header class="hero">
-        <h1 class="animate-up delay-1">See through walls with <span class="text-gradient">ordinary WiFi.</span></h1>
-        <p class="subtitle animate-up delay-2">An ESP32-S3 and a Raspberry Pi detect motion, presence, and breathing through solid walls using Channel State Information.</p>
+        <div class="badge reveal">Open Source v1.0.0</div>
+        <h1 class="animate-up delay-1">See through solid walls with a <span class="text-gradient">$5 WiFi chip.</span></h1>
+        <p class="subtitle animate-up delay-2">WiFi Sense extracts raw 802.11 Channel State Information (CSI) to detect human motion and respiration in complete darkness. No cameras. No radar. Just ordinary WiFi.</p>
         
         <div class="cta-group animate-up delay-3">
-            <a href="https://github.com/The-Masked-Bear/wifisense-pi" class="btn btn-primary">View on GitHub</a>
-            <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="btn btn-glow">❤️ Support the Creator</a>
+            <a href="https://github.com/The-Masked-Bear/wifisense-pi" class="btn btn-primary">View Source Code</a>
+            <a href="#quickstart" class="btn btn-secondary">Quick Start</a>
         </div>
 
         <div class="hero-image-wrapper animate-up delay-4">
-            <!-- Using the repo's actual dashboard image -->
             <img src="dashboard.webp" alt="WiFi Sense Dashboard" class="hero-image">
             <div class="glass-overlay"></div>
         </div>
     </header>
 
+    <!-- Modern Bento Box Features -->
+    <section class="bento-section">
+        <div class="bento-header reveal">
+            <h2>Engineering at the Edge</h2>
+            <p>Built for the Raspberry Pi 4 and ESP32-S3, bypassing standard WiFi limitations to extract raw physical layer data.</p>
+        </div>
+        
+        <div class="bento-grid">
+            <!-- Large Card 1 -->
+            <div class="bento-card span-2 reveal">
+                <div class="bento-icon">🌊</div>
+                <h3>Sub-Millimeter Precision</h3>
+                <p>Because the human body is mostly water, we reflect 2.4GHz signals strongly. By decomposing the sub-carrier covariance to establish a noise floor, the DSP isolates tiny Doppler shifts. A chest moving just 6mm during breathing is perfectly resolved at 0.13–0.7 Hz.</p>
+            </div>
+            
+            <!-- Small Card 1 -->
+            <div class="bento-card reveal">
+                <div class="bento-icon">🔒</div>
+                <h3>Total Privacy</h3>
+                <p>No optical sensors. Operates in total darkness. Detects presence and movement without capturing identifiable images or audio.</p>
+            </div>
 
-    <!-- Features Section -->
-    <section class="features">
-        <div class="feature-card reveal">
-            <div class="icon">🌊</div>
-            <h3>Motion & Presence</h3>
-            <p>Tells an empty room from a room with a motionless person in it. Something PIR sensors constantly fail at.</p>
+            <!-- Small Card 2 -->
+            <div class="bento-card reveal">
+                <div class="bento-icon">📻</div>
+                <h3>Encrypted Link</h3>
+                <p>CSI data is routed over an AES-128 encrypted nRF24 radio link to prevent the transfer from corrupting the 2.4GHz measurement band.</p>
+            </div>
+
+            <!-- Large Card 2 -->
+            <div class="bento-card span-2 reveal">
+                <div class="bento-icon">📊</div>
+                <h3>Real-time DSP Pipeline</h3>
+                <p>The Raspberry Pi continuously forces a 100Hz UDP stream to the ESP32. It cleans the bytes into amplitude, tracks respiration peaks via harmonic summation, applies hysteresis, and streams a live WebGL 3D waterfall to your browser.</p>
+            </div>
         </div>
-        <div class="feature-card reveal">
-            <div class="icon">🫁</div>
-            <h3>Breathing Rate</h3>
-            <p>Detects a chest moving just 6mm. Tracks respiration from 8 to 36 breaths per minute with incredible accuracy.</p>
-        </div>
-        <div class="feature-card reveal">
-            <div class="icon">🧱</div>
-            <h3>Through Solid Walls</h3>
-            <p>2.4 GHz passes right through plasterboard, wood, and glass. Monitor a room without ever stepping foot inside.</p>
+    </section>
+
+    <!-- Terminal Quickstart Section -->
+    <section id="quickstart" class="terminal-section reveal">
+        <div class="terminal-container">
+            <div class="terminal-header">
+                <div class="mac-btns">
+                    <span class="close"></span>
+                    <span class="minimize"></span>
+                    <span class="maximize"></span>
+                </div>
+                <div class="terminal-title">bash — install</div>
+            </div>
+            <div class="terminal-body">
+                <p><span class="prompt">$</span> git clone https://github.com/The-Masked-Bear/wifisense-pi</p>
+                <p><span class="prompt">$</span> cd wifisense-pi && python3 -m venv .venv</p>
+                <p><span class="comment"># Install dependencies</span></p>
+                <p><span class="prompt">$</span> ./.venv/bin/pip install -r requirements.txt</p>
+                <p><span class="comment"># Run the physics simulator without any hardware!</span></p>
+                <p><span class="prompt">$</span> cd pi && ../.venv/bin/python -m wifisense --link synthetic</p>
+                <p class="output">Starting WiFi Sense DSP Engine...</p>
+                <p class="output success">Dashboard live at http://localhost:8080</p>
+                <p><span class="cursor">_</span></p>
+            </div>
         </div>
     </section>
 
     <!-- Support Section -->
     <section class="support-section reveal">
-        <h2>Keep the Project Alive</h2>
-        <p>If WiFi Sense helped you, consider supporting its continuous development. Your support helps buy hardware and coffee!</p>
-        <br>
-        <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="btn btn-glow" style="display: inline-block;">☕ Buy me a Coffee</a>
+        <div class="support-content">
+            <h2>Keep the Project Alive</h2>
+            <p>Building custom drivers and DSP pipelines takes hundreds of hours and lots of burnt hardware. If WiFi Sense helped you, consider supporting its continuous development.</p>
+            <br>
+            <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="btn btn-glow support-btn">
+                <span style="font-size: 1.2rem;">☕</span> Sponsor on Gumroad
+            </a>
+        </div>
     </section>
 
     <!-- Footer -->
     <footer>
-        <p>Built by The-Masked-Bear. Open Source under Apache-2.0.</p>
+        <div class="footer-content">
+            <div class="logo">WiFi Sense</div>
+            <p>Developed by The-Masked-Bear. Released under the Apache-2.0 License.</p>
+        </div>
     </footer>
-    <script src="https://gumroad.com/js/gumroad.js"></script>
 
+    <script src="https://gumroad.com/js/gumroad.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
