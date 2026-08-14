@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Sense | Through-Wall Sensing</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Background Animated Orbs -->
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo">WiFi Sense</div>
+        <a href="https://polar.sh/The-Masked-Bear" target="_blank" class="nav-btn">Sponsor Project</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <h1 class="animate-up delay-1">See through walls with <span class="text-gradient">ordinary WiFi.</span></h1>
+        <p class="subtitle animate-up delay-2">An ESP32-S3 and a Raspberry Pi detect motion, presence, and breathing through solid walls using Channel State Information.</p>
+        
+        <div class="cta-group animate-up delay-3">
+            <a href="https://github.com/The-Masked-Bear/wifisense-pi" class="btn btn-primary">View on GitHub</a>
+            <a href="https://polar.sh/The-Masked-Bear" target="_blank" class="btn btn-glow">❤️ Support on Polar</a>
+        </div>
+
+        <div class="hero-image-wrapper animate-up delay-4">
+            <!-- Using the repo's actual dashboard image -->
+            <img src="../docs/dashboard.webp" alt="WiFi Sense Dashboard" class="hero-image">
+            <div class="glass-overlay"></div>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="feature-card reveal">
+            <div class="icon">🌊</div>
+            <h3>Motion & Presence</h3>
+            <p>Tells an empty room from a room with a motionless person in it. Something PIR sensors constantly fail at.</p>
+        </div>
+        <div class="feature-card reveal">
+            <div class="icon">🫁</div>
+            <h3>Breathing Rate</h3>
+            <p>Detects a chest moving just 6mm. Tracks respiration from 8 to 36 breaths per minute with incredible accuracy.</p>
+        </div>
+        <div class="feature-card reveal">
+            <div class="icon">🧱</div>
+            <h3>Through Solid Walls</h3>
+            <p>2.4 GHz passes right through plasterboard, wood, and glass. Monitor a room without ever stepping foot inside.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>Built by The-Masked-Bear. Open Source under Apache-2.0.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
