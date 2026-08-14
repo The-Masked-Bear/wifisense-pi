@@ -1,6 +1,8 @@
 # WiFi Sense
 *by The-Masked-Bear*
 
+[![Official Website](https://img.shields.io/badge/🌐_Official_Website-Click_Here-000000?style=for-the-badge&logo=github)](https://the-masked-bear.github.io/wifisense-pi)
+
 
 [![validate](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/validate.yml/badge.svg)](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/validate.yml)
 [![package](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/package.yml/badge.svg)](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/package.yml)
