@@ -23,8 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
 const heroImage = document.querySelector('.hero-image-wrapper');
 if (heroImage) {
     document.addEventListener('mousemove', (e) => {
-        const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
-        const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+        const xAxis = (window.innerWidth / 2 - e.clientX) / 50;
+        const yAxis = (window.innerHeight / 2 - e.clientY) / 50;
         heroImage.style.transform = `perspective(1000px) rotateY(${xAxis}deg) rotateX(${yAxis + 5}deg)`;
     });
 

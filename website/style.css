@@ -350,6 +350,7 @@ h1 {
     font-size: 0.95rem;
     color: #e6edf3;
     line-height: 1.7;
+    overflow-x: auto;
 }
 
 .prompt { color: var(--accent-3); font-weight: bold; margin-right: 10px; }
