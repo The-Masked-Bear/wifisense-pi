@@ -26,7 +26,7 @@ moving as they breathe.
 
 If you found this project helpful and want to support its development, consider dropping a tip!
 <a href="https://debarghya47.gumroad.com/l/tzbkar" target="_blank">
-  <img src="docs/donate.svg?v=cyber" alt="Support on Gumroad">
+  <img src="docs/donate.svg?v=premium" alt="Support on Gumroad">
 </a>
 
 ## Contents
