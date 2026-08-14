@@ -709,5 +709,5 @@ reported a breathing rate seven times too fast.
 If you found this project helpful and want to support its development, consider dropping a tip! It helps keep the open-source work going.
 
 <a href="https://topmate.io/themaskedbear/" target="_blank">
-  <img src="https://img.shields.io/badge/Support_Me-Topmate-FF5A5F?style=for-the-badge&logo=buy-me-a-coffee&logoColor=white" alt="Support me on Topmate">
+  <img src="docs/donate.svg" alt="Support me on Topmate">
 </a>
