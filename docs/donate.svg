@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="320" height="100" viewBox="0 0 320 100">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF512F" />
-      <stop offset="100%" stop-color="#DD2476" />
+      <stop offset="0%" stop-color="#00C9FF" />
+      <stop offset="100%" stop-color="#92FE9D" />
     </linearGradient>
     <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feGaussianBlur stdDeviation="12" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
     <style>
@@ -13,7 +13,7 @@
         fill: url(#bg); 
         rx: 30px; 
         filter: url(#glow); 
-        animation: pulse 2.5s ease-in-out infinite alternate; 
+        animation: pulse 3s ease-in-out infinite alternate; 
         transform-origin: 150px 45px; 
       }
       .btn-core { 
