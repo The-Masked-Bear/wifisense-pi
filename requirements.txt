@@ -1,0 +1,17 @@
+# Server and signal processing.  Everything here is needed to run the
+# dashboard, including with --link synthetic (no hardware at all).
+numpy>=1.26
+scipy>=1.11
+fastapi>=0.110
+uvicorn[standard]>=0.27
+websockets>=12.0
+pyserial>=3.5
+cryptography>=42.0          # AES-128-CTR on the radio link
+
+# --- optional, per transport -------------------------------------------------
+# Only needed if CSI arrives over a radio instead of the USB cable.  Both pull
+# in Pi-specific SPI support and will not install on a generic machine.
+#
+#   pyrf24>=0.6             # nRF24L01+ receiver  (--link nrf24)
+#   cc1101>=3.0             # CC1101 receiver and the 433 MHz band monitor
+#   spidev>=3.6             # raw SPI, used by the CC1101 path

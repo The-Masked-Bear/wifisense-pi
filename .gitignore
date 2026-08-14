@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# PlatformIO build output (~48 MB of toolchain artifacts)
+firmware/.pio/
+
+# Local configuration.  Holds the radio encryption key for THIS deployment --
+# copy pi/config.example.json to pi/config.json and generate your own.
+pi/config.json
+
+# Per-deployment secrets: the radio encryption key for THIS node.
+firmware/src/secrets.h
+
+# Captured sessions and the long-term archive.  These are recordings of a real
+# room: CSI captures and 10 s occupancy aggregates that show when a home was
+# occupied and when someone slept.  Never publish them.
+recordings/
+*.csi
+*.db
+*.db-wal
+*.db-shm
+
+# Editor / OS noise
+.DS_Store
+.lgd-nfy0
+*.swp

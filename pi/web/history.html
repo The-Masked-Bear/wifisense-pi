@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070a10">
+<title>WiFi Sense — History</title>
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <span class="dot live"></span>
+    <h1>WiFi&nbsp;Sense</h1>
+    <span class="sub">history</span>
+  </div>
+  <div class="bar-stats">
+    <span class="chip hide-sm"><b id="spanDays">–</b><i>days held</i></span>
+    <span class="chip hide-sm"><b id="spanRows">–</b><i>rows</i></span>
+    <a class="ghost" href="/">← live</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- ------------------------------------------------------------ no archive -->
+  <section class="panel" id="offPanel" hidden>
+    <div class="panel-head"><h2>History unavailable</h2></div>
+    <p class="axis-note" id="offWhy">The long-term archive is disabled.</p>
+  </section>
+
+  <!-- ----------------------------------------------------------- sleep report -->
+  <section class="panel grow" id="sleepPanel">
+    <div class="panel-head">
+      <h2>Sleep report</h2>
+      <div class="head-right">
+        <select id="nightPick" class="ghost"></select>
+        <span class="legend" id="sleepRange">–</span>
+      </div>
+    </div>
+
+    <div id="sleepBody">
+      <div class="pkt-hero">
+        <div class="pkt-big">
+          <span>TIME IN BED</span><b id="sIn">–</b><i id="sInSub">–</i>
+        </div>
+        <div class="pkt-big">
+          <span>STILL</span><b id="sStill">–</b><i id="sStillSub">–</i>
+        </div>
+        <div class="pkt-big">
+          <span>RESTLESS</span><b id="sRest">–</b><i id="sRestSub">–</i>
+        </div>
+        <div class="pkt-big">
+          <span>BREATHING</span><b id="sBpm">–</b><i id="sBpmSub">–</i>
+        </div>
+      </div>
+
+      <div class="pkt-title" style="margin-top:4px">THE NIGHT — movement above the bar is a disturbance</div>
+      <canvas id="nightChart" class="hchart tall"></canvas>
+      <div class="axis" id="nightAxis"><span>–</span><span>–</span><span>–</span></div>
+
+      <div class="pkt-group">
+        <div class="pkt-title">DISTURBANCES</div>
+        <div class="grid" id="sWakes"></div>
+      </div>
+    </div>
+
+    <p class="axis-note" id="sleepNote">
+      <b>Not a medical device, and not polysomnography.</b> Everything here comes
+      from gross movement and chest motion measured through a single radio path,
+      so it can report time in bed, stillness and breathing rate honestly &mdash;
+      and cannot report sleep <i>stages</i> at all. REM and deep sleep are
+      distinguished by brain and eye activity, which is simply not present in
+      this signal, so no stage breakdown is offered rather than one being
+      invented. <b>Still</b> means gross motion stayed under
+      +<span id="quietDb">5</span>&nbsp;dB &mdash; the same threshold the
+      breathing detector needs to resolve a rate at all.
+    </p>
+  </section>
+
+  <!-- --------------------------------------------------------------- history -->
+  <section class="panel grow">
+    <div class="panel-head">
+      <h2>Recorded history</h2>
+      <div class="head-right">
+        <span class="legend" id="rangeInfo">–</span>
+        <span class="key"><i class="sw motion"></i>motion</span>
+        <span class="key"><i class="sw vital"></i>vitals</span>
+        <div id="rangeBtns" class="rangebtns"></div>
+      </div>
+    </div>
+
+    <div class="pkt-title">ACTIVITY (dB over the noise floor)</div>
+    <canvas id="dbChart" class="hchart"></canvas>
+
+    <div class="pkt-title">OCCUPANCY</div>
+    <canvas id="occChart" class="hband"></canvas>
+
+    <div class="pkt-title">BREATHING RATE (bpm, blank where no lock held)</div>
+    <canvas id="bpmChart" class="hchart"></canvas>
+
+    <div class="pkt-title">ENVIRONMENT</div>
+    <canvas id="envChart" class="hchart"></canvas>
+    <div class="axis" id="histAxis"><span>–</span><span>–</span><span>–</span></div>
+
+    <p class="axis-note">
+      Rows are 10&nbsp;s aggregates, decimated to fit the canvas. The activity
+      trace plots the <b>mean</b> as a line and the <b>peak</b> as the lighter
+      band above it &mdash; a mean alone hides a one&#8209;second movement spike,
+      which is exactly the event that separates <i>asleep</i> from
+      <i>turned over</i>. Dotted lines are the thresholds the detector actually
+      decides on.
+    </p>
+  </section>
+
+</main>
+
+<script src="/static/js/history.js"></script>
+</body>
+</html>

@@ -1,0 +1,439 @@
+/* WiFi Sense dashboard.
+   Deliberately dark-only: this is an instrument display, and a light theme
+   would wash out the waterfall's colour ramp, which is doing real work here
+   rather than decoration. */
+
+:root {
+  --bg:        #070a10;
+  --panel:     #0d121c;
+  --panel-2:   #111826;
+  --line:      #1e2839;
+  --text:      #e6ecf5;
+  --muted:     #7c8aa3;
+  --dim:       #4b586e;
+
+  --motion:    #4dd4c4;
+  --vital:     #c88bff;
+  --breath:    #7fd1ff;
+  --alert:     #ff9f4d;
+  --ok:        #4ade8a;
+  --bad:       #ff5f6b;
+
+  --r: 12px;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "DejaVu Sans Mono", Menlo, monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+/* The `hidden` attribute sets display:none from the UA stylesheet, which any
+   element rule with a class selector out-specifies -- so `.waterfall{display:block}`
+   silently defeated `hidden` and drew both canvases stacked on top of each
+   other.  Restore the intent explicitly. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* A faint vignette keeps the eye on the centre panels without adding chrome. */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(1200px 700px at 50% -10%, rgba(77,212,196,0.055), transparent 70%);
+}
+
+/* ------------------------------------------------------------------- header */
+
+.bar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 10px 16px;
+  background: rgba(7,10,16,0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.brand h1 {
+  font-size: 15px; font-weight: 650; margin: 0; letter-spacing: 0.02em; white-space: nowrap;
+}
+.brand .sub {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--dim); flex: none; align-self: center;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.dot.live { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+.dot.bad  { background: var(--bad); box-shadow: 0 0 10px var(--bad); }
+
+.bar-stats { display: flex; align-items: center; gap: 8px; }
+.chip {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  background: var(--panel-2); border: 1px solid var(--line);
+  padding: 4px 8px; border-radius: 7px; white-space: nowrap;
+}
+.chip b { color: var(--text); font-weight: 600; }
+.chip i { font-style: normal; opacity: 0.55; margin-left: 3px; }
+
+.ghost {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  background: var(--panel-2); border: 1px solid var(--line);
+  padding: 5px 10px; border-radius: 7px; cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.ghost:hover { color: var(--text); border-color: var(--dim); }
+.ghost.on { color: var(--bad); border-color: var(--bad); }
+
+/* -------------------------------------------------------------------- layout */
+
+main {
+  position: relative; z-index: 1;
+  display: grid; gap: 12px;
+  padding: 12px;
+  max-width: 1500px; margin: 0 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 14px;
+  min-width: 0;
+}
+.hero, .grow { grid-column: 1 / -1; }
+
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.panel-head h2 {
+  margin: 0; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted);
+}
+.head-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.legend { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.key { font-family: var(--mono); font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.sw { width: 10px; height: 3px; border-radius: 2px; display: inline-block; }
+.sw.motion { background: var(--motion); }
+.sw.vital  { background: var(--vital); }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.seg-btn {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  background: var(--panel-2); border: 0; padding: 4px 9px; cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.seg-btn + .seg-btn { border-left: 1px solid var(--line); }
+.seg-btn.on { color: var(--bg); background: var(--motion); font-weight: 600; }
+
+.axis-note {
+  margin: 9px 2px 0; font-size: 11px; line-height: 1.5; color: var(--muted);
+}
+.axis-note b { color: var(--text); font-weight: 600; }
+
+.mini {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 6px; padding: 3px 6px; cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------- hero */
+
+.hero { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.hero-main { min-width: 0; }
+
+.state {
+  font-size: clamp(30px, 6vw, 52px);
+  font-weight: 700; letter-spacing: -0.02em; line-height: 1.02;
+  color: var(--dim);
+  transition: color 0.4s, text-shadow 0.4s;
+}
+.state.empty     { color: var(--dim); }
+.state.still     { color: var(--vital); text-shadow: 0 0 34px rgba(200,139,255,0.30); }
+.state.subtle    { color: var(--motion); text-shadow: 0 0 34px rgba(77,212,196,0.28); }
+.state.active    { color: var(--motion); text-shadow: 0 0 40px rgba(77,212,196,0.45); }
+.state.vigorous  { color: var(--alert); text-shadow: 0 0 46px rgba(255,159,77,0.50); }
+.state-sub { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+.hero-meters { display: flex; gap: 18px; flex: 1; min-width: 260px; max-width: 520px; }
+.meter { flex: 1; min-width: 0; }
+.meter-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  letter-spacing: 0.09em; margin-bottom: 6px;
+}
+.meter-head b { color: var(--text); font-size: 12px; font-weight: 600; }
+
+.bar-track {
+  height: 7px; border-radius: 4px; background: var(--panel-2);
+  border: 1px solid var(--line); overflow: hidden;
+}
+.bar-fill {
+  height: 100%; width: 0%;
+  transition: width 0.22s cubic-bezier(.4,0,.2,1);
+  border-radius: 3px;
+}
+.bar-fill.motion { background: linear-gradient(90deg, #2b7f77, var(--motion)); box-shadow: 0 0 12px rgba(77,212,196,0.55); }
+.bar-fill.vital  { background: linear-gradient(90deg, #6d4a94, var(--vital)); box-shadow: 0 0 12px rgba(200,139,255,0.50); }
+
+/* ----------------------------------------------------------------- canvases */
+
+.waterfall {
+  width: 100%; height: 260px; display: block;
+  border-radius: 8px; background: #080b12;
+  border: 1px solid var(--line);
+}
+.trace { width: 100%; height: 120px; display: block; }
+
+/* -------------------------------------------------------------- respiration */
+
+.breath { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.bpm { flex: none; min-width: 130px; }
+.bpm-value {
+  font-family: var(--mono); font-size: 46px; font-weight: 600;
+  line-height: 1; color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.4s, text-shadow 0.4s;
+}
+.bpm-value.live { color: var(--breath); text-shadow: 0 0 28px rgba(127,209,255,0.42); }
+.bpm-unit { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 4px; letter-spacing: 0.07em; }
+.conf { height: 3px; background: var(--panel-2); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.conf-fill { height: 100%; width: 0%; background: var(--breath); transition: width 0.4s; border-radius: 2px; }
+
+.breath-viz { flex: 1; min-width: 220px; }
+.waveform { width: 100%; height: 68px; display: block; }
+.spectrum { width: 100%; height: 46px; display: block; margin-top: 6px; }
+.axis {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 9px; color: var(--dim); margin-top: 3px;
+}
+
+/* --------------------------------------------------------------- diagnostics */
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 9px; }
+.cell {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px;
+}
+.cell span {
+  display: block; font-family: var(--mono); font-size: 9px;
+  color: var(--dim); letter-spacing: 0.09em; text-transform: uppercase;
+}
+.cell b {
+  display: block; font-family: var(--mono); font-size: 14px;
+  color: var(--text); font-weight: 600; margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cell b.warn { color: var(--alert); }
+.cell b.bad  { color: var(--bad); }
+
+/* ------------------------------------------------------------------ responsive */
+
+@media (max-width: 860px) {
+  main { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+  .hide-sm { display: none; }
+  .waterfall { height: 200px; }
+  .hero { gap: 16px; }
+  .hero-meters { min-width: 100%; }
+  .bpm-value { font-size: 38px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar-fill, .conf-fill, .state, .bpm-value, .dot { transition: none; }
+}
+
+#surface { touch-action: none; cursor: grab; }
+#surface:active { cursor: grabbing; }
+
+/* The 3D view gets a taller box than the 2D waterfall it shares a panel with.
+   Same measurement, but a perspective view of a surface that turns needs vertical
+   room: the camera fit is bound by the height in a 4:1 box, which leaves two
+   thirds of the width empty however the field is chosen. Narrow screens are
+   already close to square, so this applies only above the breakpoint. */
+@media (min-width: 861px) {
+  #surface { height: 380px; }
+}
+
+/* -------------------------------------------------------------- environment */
+
+/* auto-fit rather than a fixed four columns: with one sensor unplugged the
+   remaining cards spread to fill the row instead of leaving a hole. */
+.env {
+  display: grid; gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+.env-card {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px 8px;
+  min-width: 0;
+}
+.env-card.absent { opacity: 0.42; }
+.env-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.11em;
+  color: var(--dim); text-transform: uppercase;
+}
+.env-head i { font-style: normal; opacity: 0.7; }
+.env-value { display: flex; align-items: baseline; gap: 4px; margin-top: 5px; }
+.env-value b {
+  font-family: var(--mono); font-size: 28px; font-weight: 600;
+  color: var(--text); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.env-value u { text-decoration: none; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+/* The AQI category palette, shifted off the canonical EPA colours only as far
+   as this dark background requires: pure #ffff00 and #00e400 vibrate badly on
+   near-black, and the maroon band is invisible against it. The ordering and
+   the boundaries are unchanged, which is what makes the colour readable at a
+   glance by anyone who has seen an air quality app before. */
+.env-value b.aqi-good           { color: #4ade8a; }
+.env-value b.aqi-moderate       { color: #f2d54e; }
+.env-value b.aqi-sensitive      { color: #ff9f4d; }
+.env-value b.aqi-unhealthy      { color: #ff5f6b; }
+.env-value b.aqi-very-unhealthy { color: #c88bff; }
+.env-value b.aqi-hazardous      { color: #ff3b3b; text-shadow: 0 0 22px rgba(255,59,59,0.5); }
+/* Not a band. The index is pinned at the bottom of the scale because the
+   baseline drifted, so it is shown as untrusted rather than as "Good". */
+.env-value b.aqi-stale          { color: var(--dim); }
+
+.spark { width: 100%; height: 34px; display: block; margin-top: 7px; }
+/* pre-line so the air-quality card can emit its category and its ppm on
+   separate lines, and min-height so doing that does not make one card taller
+   than the other three. */
+.env-foot {
+  font-family: var(--mono); font-size: 9.5px; color: var(--dim);
+  margin-top: 3px; line-height: 1.4; min-height: 2.8em;
+  white-space: pre-line; overflow: hidden;
+}
+
+@media (max-width: 860px) {
+  .env { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .env-value b { font-size: 23px; }
+}
+
+/* ------------------------------------------------------------- sub-GHz scan */
+
+.spec { display: flex; gap: 14px; align-items: stretch; flex-wrap: wrap; }
+.specfall {
+  flex: 1; min-width: 240px; height: 180px; display: block;
+  border-radius: 8px; background: #080b12; border: 1px solid var(--line);
+}
+.spec-side { flex: none; width: 190px; }
+.spec-title {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.13em;
+  color: var(--dim); text-transform: uppercase;
+}
+.spec-events { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.spec-ev {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--mono); font-size: 11px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 6px; padding: 4px 8px;
+}
+.spec-ev b { color: var(--alert); font-weight: 600; }
+.spec-ev i { font-style: normal; color: var(--muted); font-size: 10px; }
+.spec-quiet { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.spec-peak b {
+  font-family: var(--mono); font-size: 20px; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.spec-peak i { font-style: normal; font-family: var(--mono); font-size: 10px; color: var(--muted); margin-left: 6px; }
+
+@media (max-width: 860px) {
+  .spec-side { width: 100%; }
+  .specfall { height: 150px; }
+}
+
+/* ------------------------------------------------------------------- packets */
+
+/* Four headline numbers on one row, each collapsing to two-up on a phone.
+   These are the figures worth reading from across the room; the per-counter
+   grids below them are for when one of these four looks wrong. */
+.pkt-hero {
+  display: grid; gap: 10px; margin-bottom: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.pkt-big {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 12px 8px; min-width: 0;
+}
+.pkt-big span {
+  display: block; font-family: var(--mono); font-size: 9px;
+  color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase;
+}
+.pkt-big b {
+  display: block; font-family: var(--mono); font-size: 24px; font-weight: 600;
+  color: var(--text); line-height: 1.15; margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+/* Graded rather than binary: a link losing 2% is worth noticing but is still
+   working, and painting it the same red as a dead link would train the reader
+   to ignore the colour entirely. */
+.pkt-big b.good { color: var(--ok); }
+.pkt-big b.warn { color: var(--alert); }
+.pkt-big b.bad  { color: var(--bad); }
+.pkt-big i {
+  display: block; font-style: normal; font-family: var(--mono);
+  font-size: 9.5px; color: var(--muted); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.pkt-group { margin-top: 12px; }
+.pkt-group:first-of-type { margin-top: 0; }
+.pkt-title {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.13em;
+  color: var(--dim); text-transform: uppercase; margin-bottom: 7px;
+}
+
+@media (max-width: 860px) {
+  .pkt-hero { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); }
+  .pkt-big b { font-size: 20px; }
+}
+
+/* ------------------------------------------------------------------- history */
+
+.hchart {
+  width: 100%; height: 120px; display: block;
+  border-radius: 8px; background: #080b12;
+  border: 1px solid var(--line); margin-bottom: 12px;
+}
+.hchart.tall { height: 200px; }
+/* The occupancy strip is categorical, so it gets just enough height to read as
+   a band and no more -- taller would imply a magnitude it does not carry. */
+.hband {
+  width: 100%; height: 22px; display: block;
+  border-radius: 5px; background: #080b12;
+  border: 1px solid var(--line); margin-bottom: 12px;
+}
+
+.rangebtns { display: flex; gap: 4px; }
+.rangebtns .ghost { padding: 3px 9px; font-size: 10px; }
+.rangebtns .ghost.on { color: var(--text); border-color: var(--motion); }
+
+/* The night picker is a native select so it works on a phone without a custom
+   dropdown; only its chrome is restyled to match the ghost buttons. */
+select.ghost {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--panel-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 4px 8px;
+}
+
+/* Header link back to the live view, styled as a button rather than a link so
+   it does not read as body text in the bar. */
+a.ghost { text-decoration: none; display: inline-block; }
+
+@media (max-width: 860px) {
+  .hchart { height: 96px; }
+  .hchart.tall { height: 150px; }
+}

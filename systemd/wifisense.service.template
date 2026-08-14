@@ -1,0 +1,55 @@
+[Unit]
+Description=WiFi Sense - ESP32-S3 CSI sensing server
+# The stimulus needs the network up to reach the sensor node, and the node
+# needs a moment to associate after a cold boot anyway.
+After=network-online.target
+Wants=network-online.target
+# Never stop retrying: the board may be unplugged for a while, and a rate limit
+# would turn that into a permanent failure needing a manual reset.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=__USER__
+Group=__USER__
+
+# The project directory may contain spaces, and the two settings below need
+# opposite treatment for it.  WorkingDirectory takes the rest of the line
+# verbatim, so it must be left unquoted -- quoting it makes the quote marks
+# part of the path.  ExecStart is a command line that systemd splits on
+# whitespace, so the interpreter path there must be quoted.
+WorkingDirectory=__PROJECT__/pi
+ExecStart="__PROJECT__/.venv/bin/python" -m wifisense
+
+# dialout for /dev/ttyUSB0; spi and gpio only matter when the CC1101 or nRF24
+# links are enabled, but granting them here avoids a confusing failure later.
+SupplementaryGroups=dialout spi gpio
+
+# The sensor node is often still associating when this starts, and a USB
+# re-enumeration should never need manual intervention.
+Restart=always
+RestartSec=5
+
+# CSI arrives on a wire that does not wait.  If this process is descheduled the
+# serial buffer backs up and the sample timing -- which the respiration FFT
+# depends on being regular -- is corrupted.  Measured on a loaded Pi: a
+# saturated box pushed the pipeline 4 s behind the radio.  A modest priority
+# bump keeps the soft-realtime path ahead of background work without needing
+# real-time scheduling and the lockup risk that carries.
+Nice=-5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=2
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wifisense
+
+# Kept deliberately light.  Stronger confinement (ProtectHome, ProtectSystem,
+# ReadWritePaths) fights a project directory that lives under /home and holds
+# the recordings the service must write, and buys little for a service that is
+# already unprivileged and local.
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

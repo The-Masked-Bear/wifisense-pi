@@ -1,0 +1,31 @@
+name: validate
+
+# The DSP is the part of this project that can actually be wrong in a way no
+# room can reveal: a real room cannot tell you whether "14 breaths/min" was
+# correct.  tools/validate_dsp.py drives the whole detector chain with
+# synthetic CSI whose breathing rate is known exactly, so it is the only place
+# the pipeline is falsifiable.  It needs no hardware.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  dsp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # Only the DSP dependencies: the radio transports are Pi-specific and
+      # the validator never touches them.
+      - run: python -m pip install --upgrade pip numpy scipy
+
+      - name: DSP validation against known ground truth
+        working-directory: pi
+        run: python tools/validate_dsp.py

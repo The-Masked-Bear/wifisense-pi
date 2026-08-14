@@ -1,0 +1,1331 @@
+================================================================================
+  WiFi SENSE  --  seeing motion, presence and breathing through walls with WiFi
+================================================================================
+
+A Raspberry Pi 4 and an ESP32-S3 that together detect people in a room using
+nothing but ordinary WiFi signals. No camera, no PIR sensor, nothing worn. It
+works through interior walls, in complete darkness, and it detects a person who
+is sitting perfectly still by picking up the movement of their chest as they
+breathe.
+
+Everything below is written to be read at the bench, away from the terminal.
+
+
+--------------------------------------------------------------------------------
+1.  WHAT THIS ACTUALLY DOES  (and what it does not)
+--------------------------------------------------------------------------------
+
+WORKS, MEASURED ON THIS HARDWARE:
+
+  * Motion detection        walking, gesturing, sitting down.  Reads ~28 dB
+                            above the noise floor -- unmissable.
+  * Presence detection      distinguishes an empty room from a room with a
+                            motionless person in it.  This is the hard one, and
+                            the thing PIR sensors get wrong constantly.
+  * Breathing rate          8 to 36 breaths per minute.  Validated to within
+                            0.1 bpm against known ground truth.
+  * Through walls           2.4 GHz passes through plasterboard, wood and glass
+                            with little loss.  Brick and concrete attenuate it
+                            heavily; foil-backed insulation blocks it.
+  * Activity classification empty / still / subtle / active / vigorous.
+  * Environment sensing     temperature, humidity, barometric pressure and a
+                            gas-based air quality index, from a BMP280, a
+                            DHT22 and an MQ135 on the same node.  Read section
+                            6d before trusting the air quality number: it
+                            cannot see PM2.5, which is what a real AQI is
+                            mostly made of.
+
+DOES NOT WORK, AND CANNOT WITH THIS HARDWARE:
+
+  * Imaging or pose.  You will not get a skeleton or a silhouette. The MIT
+    demos that show that (RF-Pose, RF-Capture, WiTrack) do not use WiFi -- they
+    use purpose-built FMCW radar with GHz of bandwidth and a physical antenna
+    array. WiFi at 20 MHz bandwidth gives a range resolution of c/2B = 7.5
+    metres, which is larger than most rooms. There is no signal processing that
+    recovers an image from that; the information is not present.
+
+  * Locating a person in the room.  One transmitter and one receiver measure a
+    single path. You learn that something changed, not where. Coarse
+    localisation needs three or more spatially separated nodes.
+
+  * Counting people.  Two people produce a bigger disturbance than one, but not
+    a reliably countable one.
+
+  * Detecting someone holding perfectly still AND holding their breath. There
+    is genuinely nothing to measure. This is physics, not a limitation of the
+    code.
+
+  * Identifying who someone is.
+
+
+--------------------------------------------------------------------------------
+2.  HOW IT WORKS
+--------------------------------------------------------------------------------
+
+A WiFi signal reaches the receiver by many paths at once -- direct, plus
+reflections off walls, furniture and people. Those copies add up with different
+delays, so some frequencies reinforce and others cancel. The resulting
+"fingerprint" across frequency is called Channel State Information (CSI), and
+most WiFi chips can report it.
+
+Move anything in the room and the path lengths change, so the fingerprint
+changes. A body is mostly water and reflects 2.4 GHz strongly, which is what
+makes people visible. At 2.4 GHz one wavelength is 12.5 cm, so a chest moving
+6 mm while breathing shifts the path by a measurable fraction of a wavelength.
+
+The data path:
+
+    ESP32-S3  --- captures CSI, 64 sub-carriers per packet, 100 times a second
+       |          (needs a packet to measure; see section 3)
+       | USB serial, 921600 baud, COBS-framed with CRC-16
+       v
+    Pi 4      --- cleans it up, then answers two questions:
+       |
+       |          "is something moving?"   energy at 1.5-9 Hz
+       |          "is someone there?"      energy at 0.13-0.7 Hz (breathing)
+       |
+       | WebSocket, ~330 kbit/s
+       v
+    Browser   --- live dashboard, on the Pi or on your phone
+
+WHY THOSE TWO FREQUENCY BANDS
+
+Both are Doppler frequencies, not body-movement frequencies. A reflector moving
+at velocity v shifts the signal by v/wavelength. Walking at 1 m/s therefore
+writes energy at about 8 Hz, not at walking pace. Breathing moves the chest
+slowly enough that it stays down at 0.13-0.7 Hz, which is why the two are
+separable at all.
+
+WHAT IT MEASURES AGAINST
+
+Every reading is in dB above the receiver's own noise floor, so an empty room
+reads 0 dB in any room, at any distance, at any transmit power. There is no
+calibration step and no learned baseline that can drift.
+
+Finding a trustworthy noise floor is the whole trick. Receiver noise is
+independent on every sub-carrier because it is generated inside the radio;
+anything happening in the room changes all the sub-carriers together. So the
+sub-carrier covariance is decomposed, and the weakest directions -- which the
+room cannot reach -- define the noise level.
+
+
+--------------------------------------------------------------------------------
+3.  THE PART THAT SURPRISES PEOPLE:  YOU MUST GENERATE TRAFFIC
+--------------------------------------------------------------------------------
+
+CSI only exists when a packet is *received*. A silent channel produces no data
+at all, no matter how good the hardware is. Three approaches were measured
+here:
+
+    approach                                        measured CSI rate
+    ---------------------------------------------   -----------------
+    Listen passively to ambient WiFi                 ~1 Hz, irregular
+    ESP32 transmits, capture CSI from the ACKs       ~1 Hz  (does not work)
+    >> Pi sends UDP to the ESP32 <<                  1:1, up to 200 Hz
+
+The third is what this system does, and it is why the ESP32 must be joined to
+your WiFi network. The Pi sends a small UDP packet to the node 100 times a
+second; each arrives as an ordinary data frame and yields exactly one CSI
+sample. The sample rate is therefore chosen, not discovered.
+
+Passive sniffing at 1 Hz is far too slow for breathing detection, which needs
+20 Hz or more. That mode still exists as a fallback but it is not useful for
+much beyond coarse motion.
+
+
+--------------------------------------------------------------------------------
+4.  WIRING
+--------------------------------------------------------------------------------
+
+4.1  TRANSPORT: THE RADIO LINK IS LIVE
+     ---------------------------------------------------------------------------
+     CSI travels from the ESP32-S3 to the Pi over the **nRF24L01+ radio**.  The
+     USB cable carries only power, plus a duplicate of the status/log frames so
+     the node stays diagnosable if the radio is misconfigured or out of range.
+
+     MEASURED, over the air:
+
+         sample rate        ~99 Hz sustained  (100 Hz requested)
+         CRC errors         0
+         frame integrity    every frame that arrives is intact
+         range              whole-room at +20 dBm PA
+
+     Switching transport, either end, at runtime:
+
+         cd pi
+         ../.venv/bin/python tools/node.py link nrf24    # radio (default)
+         ../.venv/bin/python tools/node.py link cc1101   # sub-GHz, out of band
+         ../.venv/bin/python tools/node.py link usb      # back to the cable
+
+     The choice is stored in the node's flash and restored at boot.  The Pi's
+     side follows "link" in pi/config.json.
+
+     FIVE BUGS HAD TO BE FIXED TO GET HERE, all worth knowing if it misbehaves:
+
+       1. SPI clock.  The RF24 library defaults to 10 MHz, which dupont jumpers
+          will not carry; a bit-banged probe at 250 kHz read the chip perfectly
+          while the library reported "no chip".  Now pinned to 1 MHz.
+       2. Cold-boot detection.  The chip's SPI state machine can come up
+          mid-word and misread every command.  radio_begin() now clocks a full
+          bit-banged transaction first to resynchronise it -- without this the
+          node silently fell back to USB on every reboot.
+       3. Transmit inside a mutex.  radio_send() was called while holding the
+          lock that guards frame encoding, so a slow radio stalled the status
+          task and the command handler and the whole node went mute.
+       4. Receive FIFO.  The Pi read one packet per poll.  A frame is five
+          fragments, so 100 Hz is 500 packets/s against a 3-deep FIFO -- 19%
+          packet loss compounded to 66% frame loss.  It now drains the FIFO.
+       5. Channel.  The original 108 (2508 MHz) sits outside the ISM band, where
+          the module's antenna match and filter fall off; delivery was 25-33%
+          regardless of rate.  Now 80 (2480 MHz), inside ISM and clear of the
+          WiFi channel in use.
+
+     CC1101 STATUS: the chip responds on SPI (VERSION 0x14) and the transmit
+     path is implemented, but the radio link has only been proven end to end on
+     the nRF24.  Its GDO pins read as unpowered, so check its 3.3 V before
+     relying on it.
+
+4.1a RADIO LINK TUNING  (how delivery got from 72% to ~88%)
+     ---------------------------------------------------------------------------
+     A CSI frame is split across several radio packets, and the frame survives
+     only if EVERY packet does -- delivery = (1-p)^n.  That makes both the
+     packet loss p and the fragment count n worth attacking.
+
+       auto-ack ON            A lost packet was previously lost forever.  A
+                              32-byte packet is ~128 us at 2 Mbit/s, so even
+                              600 packets/s is ~8% duty: there is ample room to
+                              retry.  setRetries(1,3) bounds a packet at ~2 ms
+                              so a deaf receiver cannot stall the sender.
+                              72% -> 85%.
+
+       trim sub-carriers      The radio reports 64 LLTF sub-carriers but only
+                              52 carry signal; the Pi discarded the rest on
+                              arrival anyway.  Dropping them at the node cuts
+                              the payload 128 -> 104 bytes and the frame from 6
+                              fragments to 5 -- ~17% fewer packets.
+                              85% -> ~88%.
+
+       duplicate fragments    Auto-ack retransmits when the ACKNOWLEDGEMENT is
+                              lost rather than the data, so the receiver
+                              legitimately sees a fragment twice.  The
+                              reassembler treated that as corruption and threw
+                              the whole frame away, which reported far more
+                              "lost" frames than were ever sent.  Duplicates
+                              are now ignored.
+
+     Remaining loss is largely the nRF24's 3-deep RX FIFO: packets are
+     acknowledged in hardware on arrival, so anything overwritten before Python
+     reads it is lost invisibly and auto-ack cannot recover it.  Sending fewer,
+     smaller packets is the only real lever, which is what the trim does.
+
+     ~88 Hz delivered is far above what the detectors need (respiration wants
+     ~20 Hz), so this is comfortable rather than marginal.
+
+
+4.1b RADIO LINK ENCRYPTION
+     ---------------------------------------------------------------------------
+     Everything sent over the radio is encrypted with AES-128 in counter mode.
+
+     This is not decoration.  CSI reveals when a room is occupied, when people
+     move, and when they sleep.  In the clear, anyone within range with a
+     matching radio on the same channel reads all of it.
+
+     Encrypted radio frame, before fragmentation:
+
+         [ session u32 ][ counter u32 ][ ciphertext ... ]
+
+     The 8-byte header is in the clear -- the receiver needs it to rebuild the
+     counter block -- and leaks only a random session id and a frame counter.
+     The CTR nonce is session || counter || eight zero bytes.
+
+     Counter-mode security depends entirely on never reusing a (key, nonce)
+     pair, so: the counter is 32 bits (497 days at 100 Hz) and the node draws a
+     fresh random session id at every boot, so a reset opens a new nonce space
+     rather than replaying the last one.  The receiver also rejects any counter
+     it has already accepted, which stops a captured frame being replayed back
+     at it later.
+
+     THIS IS CONFIDENTIALITY, NOT AUTHENTICATION.  A passive listener learns
+     nothing.  The CRC16 inside the encrypted payload means a random forgery
+     survives with probability 1/65536 -- proportionate for a home sensor, but
+     it is not a MAC, so do not rely on it where an active attacker matters.
+
+     CHANGING THE KEY (do this; the shipped one is in the repository):
+
+         python3 -c "import secrets;print(secrets.token_hex(16))"
+
+     Put the same value in BOTH:
+         firmware/src/config.h   RADIO_KEY  (as {0x.., 0x.., ...})
+         pi/config.json          radio_key  (as 32 hex characters)
+     then reflash the node.  A key mismatch shows up as cobs_errors climbing
+     with frames_ok stuck at zero.
+
+     Set RADIO_ENCRYPT to 0 and radio_encrypt to false to send in the clear;
+     useful only while debugging a link.
+
+     ONE TRAP WORTH KNOWING: the nRF24 uses fixed-size payloads, so the last
+     fragment of every frame is padded.  Unencrypted that padding is zeros and
+     the framer skips it harmlessly; encrypted, the same padding decrypts to
+     random bytes that corrupt the *next* frame.  The receiver therefore trims
+     each reassembled frame at its COBS terminator.  Symptom if that breaks:
+     the link works in the clear and fails the instant encryption is enabled.
+
+
+4.1d CC1101 STATUS  (works in software; blocked on RF)
+     ---------------------------------------------------------------------------
+     The CC1101 path is complete and correct in software.  It is driven by
+     firmware/src/cc1101_driver.{h,cpp} -- an in-tree register driver, not a
+     library.  The ELECHOUSE/SmartRC library could not be used: it drives the
+     global Arduino SPI object, latches an "already initialised" flag, and
+     busy-waits on GDO0 for up to 500 ms per packet.  On this board both radios
+     share SPI2, so that library made switching between them either fail or
+     hang the node outright.
+
+     VERIFIED WORKING:
+       * nrf24 <-> cc1101 switching, 5 consecutive swaps, no hangs
+       * Pi receiver opens 10/10 (was ~30% before the slow-open fix)
+       * receiver holds RX continuously (rearms 0 over a 40 s run)
+       * all 35 modem registers identical on both ends, byte for byte
+       * PATABLE 0xC0 (max power for 433 MHz), FREND0 selects it
+       * sync words detected off the air, so RF genuinely arrives
+
+     BLOCKED ON:
+       Signal strength.  With the node transmitting 912 packets during the
+       sample:
+
+           433 MHz quiet          -102.5 dBm mean, -98.0 peak
+           node transmitting      -102.3 dBm mean, -94.0 peak
+           lift                    +4.0 dB
+
+       At 30 cm with +10 dBm output, free-space loss is only ~15 dB, so the
+       receiver should see about -5 dBm.  It sees -94 dBm: a shortfall of
+       ~89 dB.  Packets occasionally sync but always fail CRC, which is exactly
+       what a signal sitting at the noise floor does.
+
+       A missing or unmatched antenna costs 20-40 dB per end; ~89 dB is
+       consistent with both ends radiating from a bare pad.  Worth checking:
+         * the antenna is soldered/screwed to the ANT pad, not just near it
+         * it is a 433 MHz antenna (868/915 MHz on a 433 module is a severe
+           mismatch and looks exactly like this)
+         * the module's ground plane connection
+
+       Once RF is healthy, no code changes are needed:
+           cd pi && ../.venv/bin/python tools/node.py link cc1101
+
+       Throughput ceiling when it works: ~22 Hz at 38.4 kBaud, which is enough
+       for motion and breathing but not the 100 Hz the nRF24 carries.
+
+
+4.1c IF A RADIO LINK GOES SILENT
+     ---------------------------------------------------------------------------
+     A radio that initialises but delivers nothing would leave the Pi blind,
+     and in radio mode the serial port is not even open to ask the node why.
+     So if the configured radio link delivers nothing at all for 60 seconds,
+     the Pi switches itself to the USB cable and commands the node back to
+     "link usb".  It only fires when the link has produced *nothing* since
+     starting -- a working link that merely stalls is left alone.
+
+     The dashboard shows "fell_back_from" when this has happened.
+
+
+4.2  ESP32-S3-WROOM-1 N16R8  --  FORBIDDEN PINS
+     ---------------------------------------------------------------------------
+     Read this before wiring anything to the ESP32.
+
+       GPIO 26-32   internal SPI flash.        NEVER USE.
+       GPIO 33-37   octal PSRAM.               NEVER USE on the N16R8.
+       GPIO 0       boot strapping pin.        avoid
+       GPIO 3,45,46 strapping pins.            avoid
+       GPIO 19,20   native USB D-/D+.          avoid
+       GPIO 43,44   UART0 console (in use).    avoid
+
+     The "R8" in N16R8 means 8 MB of *octal* PSRAM, and octal PSRAM consumes
+     GPIO 33-37. Wiring a peripheral there produces a board that fails to boot
+     with no useful error. This is the most common way to brick this module.
+
+     Safe to use: 1, 2, 4-18, 21, 38-42, 47, 48
+     (38 or 48 may drive the on-board RGB LED depending on board revision.)
+
+
+4.3  IF YOU ADD THE RADIOS  --  PI 4 GPIO MAP
+     ---------------------------------------------------------------------------
+     Both radios share SPI0 and use separate hardware chip-selects. SPI is
+     already enabled on this Pi (/dev/spidev0.0 and /dev/spidev0.1 both exist).
+
+     SHARED SPI0 BUS  -- wire to BOTH modules
+
+       signal   BCM    physical pin
+       ------   ----   ------------
+       SCLK     11     23
+       MOSI     10     19
+       MISO      9     21
+
+     nRF24L01+ PA/LNA   ->  /dev/spidev0.0
+
+       module pin   BCM   physical   note
+       ----------   ---   --------   --------------------------------
+       GND          --    20
+       VCC          --    17         3.3 V ONLY.  5 V destroys it.
+       CE           25    22         mode pin, NOT the SPI chip select
+       CSN           8    24         CE0
+       SCK          11    23         shared
+       MOSI         10    19         shared
+       MISO          9    21         shared
+       IRQ          24    18         optional but worth wiring
+
+     CC1101   ->  /dev/spidev0.1
+
+       module pin   BCM   physical
+       ----------   ---   --------
+       GND          --     9
+       VCC          --     1        3.3 V ONLY, not 5 V tolerant anywhere
+       SCK          11    23        shared
+       MOSI         10    19        shared
+       MISO          9    21        shared
+       CSN / SS      7    26        CE1
+       GDO0         23    16
+       GDO2         27    13
+
+     No conflicts: BCM 7, 8, 9, 10, 11, 23, 24, 25, 27 are all clear of I2C
+     (2/3), UART (14/15) and 1-Wire (4).
+
+     CC1101 PIN ORDER VARIES BY BOARD. At least three common breakout layouts
+     exist and their pin *positions* differ. Match by the silkscreen label, not
+     by counting pins.
+
+     MATCHING ESP32-S3 SIDE  (SPI2/FSPI, all within the safe set above)
+
+       SCK  GPIO12      nRF24 CSN  GPIO10      CC1101 CSN   GPIO21
+       MOSI GPIO11      nRF24 CE   GPIO14      CC1101 GDO0  GPIO18
+       MISO GPIO13      nRF24 IRQ  GPIO9       CC1101 GDO2  GPIO17
+
+
+4.4  POWER  --  where these builds usually fail
+     ---------------------------------------------------------------------------
+     The nRF24L01+ PA/LNA is the problem child. It draws ~115 mA spikes at
+     +20 dBm and the Pi's 3.3 V rail cannot supply that transient. The symptom
+     is distinctive: it works for a few packets, then goes silent for good.
+
+       * Solder 10-100 uF electrolytic PLUS 100 nF ceramic directly across the
+         module's own VCC/GND pins. At the module -- not on a breadboard rail.
+       * Better: feed it from its own AMS1117-3.3 regulator off 5 V.
+       * The same applies to the ESP32 dev board's regulator.
+
+     CC1101 is gentle (~30 mA); 100 nF + 10 uF is plenty.
+
+     Voltage tolerance: nRF24 VCC must be 3.3 V but its logic pins tolerate
+     5 V. The CC1101 tolerates 5 V nowhere. 3.3 V only, on every pin.
+
+     Antennas: attach before powering up. Transmitting into an open port can
+     damage the power amplifier. Match the CC1101 antenna to the module's band
+     -- 433 and 868 MHz antennas are not interchangeable.
+
+     IMPORTANT -- BOTH ENDS NEED A RADIO. A CC1101 link needs a CC1101 at the
+     Pi *and* at the ESP32. Same for the nRF24. One module is half a link.
+
+
+4.5  WHICH RADIO IS FOR WHAT
+     ---------------------------------------------------------------------------
+     ESP32-S3 WiFi    the sensor itself. This is what measures the room.
+
+     USB serial       always available, and the diagnostic path: status and log
+                      frames stay on the cable whatever the CSI link is doing.
+                      119 kbit/s of CSI on a link with ~85% headroom, zero
+                      errors measured, and it adds nothing to the airwaves.
+
+     CC1101 (433/868) the best wireless option, because it is completely
+                      OUTSIDE the 2.4 GHz band being sensed and so cannot
+                      disturb the measurement. Carries full raw CSI at up to
+                      ~169 Hz at 500 kbit/s, ~92 Hz at 250 kbit/s.
+
+     nRF24L01+        what this build actually runs (see 4.1).  Fast enough for
+                      raw CSI, but it transmits in 2.4 GHz -- the exact band
+                      being measured -- so the channel has to stay clear of the
+                      AP in use.  It is pinned to channel 80 (2480 MHz): inside
+                      the ISM band, where the module's antenna match and filter
+                      are actually specified, and clear of the WiFi channel in
+                      use.  Measured delivery ~88-91% of 100 Hz, which is four
+                      times what respiration needs.
+
+     For a node sitting next to the Pi the USB cable is simpler and lossless.
+     For a node placed where the sensing geometry wants it -- across the room
+     from the router -- the radio is what makes that placement possible, and is
+     why this build uses it.
+
+
+4.6  ENVIRONMENT SENSORS  --  BMP280, DHT22, MQ135
+     ---------------------------------------------------------------------------
+     All three hang off the ESP32-S3, not the Pi. That is forced, not a
+     preference:
+
+       * The MQ135 is an ANALOGUE part and the Pi 4 has no ADC at all. Reading
+         it from the Pi would need an external ADC chip.
+       * The Pi's SPI0 exposes exactly two hardware chip selects, CE0 and CE1,
+         and both are already taken (nRF24 on CE0, CC1101 on CE1). There is no
+         third slot for the BMP280 without bit-banging a soft chip select.
+
+     BMP280  (pressure + temperature, SPI)
+
+       Shares SPI2 with the two radios and only needs a chip select of its own.
+
+         module pin        ESP32-S3     note
+         ---------------   ---------    -------------------------------------
+         VCC               3V3          3.3 V. Not 5 V.
+         GND               GND
+         SCL / SCK         GPIO12       shared with both radios
+         SDA / SDI / MOSI  GPIO11       shared with both radios
+         SDO / MISO        GPIO13       shared with both radios
+         CSB / CS          GPIO15       this module's own chip select
+
+       Labelling varies by breakout. In SPI mode SDA is the *input* (MOSI) and
+       SDO is the *output* (MISO), which is the opposite of what the I2C-style
+       names suggest. If the chip id read fails, swap those two first.
+
+       A BME280 works in this slot too -- same registers, chip id 0x60 instead
+       of 0x58 -- but only its temperature and pressure are read, because the
+       DHT22 already covers humidity.
+
+     DHT22 / AM2302  (temperature + humidity, 1-wire)
+
+         module pin   ESP32-S3
+         ----------   ---------
+         VCC          3V3
+         OUT / DATA   GPIO16
+         GND          GND
+
+       The 3-pin breakout boards already carry the required pull-up resistor.
+       A bare 4-pin sensor does not: add 10 kOhm from DATA to 3V3, or it never
+       answers.
+
+       This part is slow and fussy by design. It refuses to be read faster than
+       once every 2 s and self-heats if pushed, which is why the firmware polls
+       it every 3 s and retries up to three times before calling it failed.
+
+     MQ135  ("Flying Fish" gas module, analogue)
+
+         module pin   ESP32-S3     note
+         ----------   ---------    ---------------------------------------
+         VCC          5V           the heater is specified for 5 V
+         GND          GND
+         AO           GPIO4        VIA A DIVIDER -- see below
+         DO           n/c          on-board comparator, not used
+
+       AO CANNOT GO STRAIGHT TO THE ESP32. Powered from 5 V, that pin can
+       output up to 5 V, and the ESP32-S3's ADC tolerates 3.3 V. Two equal
+       resistors halve it:
+
+              MQ135 AO ----[ 10k ]----+----[ 10k ]---- GND
+                                      |
+                                      +----> ESP32 GPIO4   (2.5 V max)
+
+       Any matched pair works -- 10k/10k, 4.7k/4.7k, 100k/100k all give exactly
+       half. Only the ratio matters. Unequal resistors the wrong way round can
+       exceed 3.3 V and destroy the input.
+
+       ALTERNATIVE, NO RESISTORS: power the module from 3V3 instead and wire AO
+       direct. Electrically safe, because AO can never exceed its own supply.
+       Then tell the node about it, once, and it remembers:
+
+           python tools/node.py mq135 supply 3v3
+
+       The trade-off is real: the heater is designed for 5 V and runs cool at
+       3.3 V, so the reading still moves in the right direction but the
+       absolute figure drifts more.
+
+       GPIO4 IS NOT ARBITRARY. It must be one of GPIO1-10, which are ADC1.
+       ADC2 (GPIO11-20) is physically unusable whenever WiFi is running -- the
+       radio owns that converter and a read returns an error instead of a
+       value. Since WiFi is the entire point of this node, ADC2 is permanently
+       off the table.
+
+       POWER: the heater draws ~150 mA continuously and stays warm to the
+       touch. That is a large, constant load. If the ESP32 browns out or the
+       CSI rate becomes erratic after adding this sensor, feed it from a
+       separate 5 V supply with a common ground rather than through the dev
+       board.
+
+       WARM-UP AND BURN-UP. Two different things, both real:
+         * Every power-on needs ~3 minutes before the reading stops sliding.
+           The firmware waits this out before it will auto-calibrate.
+         * A brand-new sensor needs 24-48 HOURS of continuous power before its
+           baseline settles for good. Until then, recalibrate occasionally.
+
+     PIN SUMMARY  --  everything now attached to the ESP32-S3
+
+       GPIO4    MQ135 AO (through the divider)
+       GPIO9    nRF24 IRQ
+       GPIO10   nRF24 CSN
+       GPIO11   SPI MOSI   (nRF24 + CC1101 + BMP280)
+       GPIO12   SPI SCK    (nRF24 + CC1101 + BMP280)
+       GPIO13   SPI MISO   (nRF24 + CC1101 + BMP280)
+       GPIO14   nRF24 CE
+       GPIO15   BMP280 CS
+       GPIO16   DHT22 DATA
+       GPIO17   CC1101 GDO2
+       GPIO18   CC1101 GDO0
+       GPIO21   CC1101 CSN
+
+     WHY THIS DOES NOT DISTURB THE CSI MEASUREMENT
+
+       The sensors are sampled by one low-priority task pinned to CPU core 1.
+       The WiFi driver and the CSI callback live on core 0. That split matters
+       for exactly one reason: reading a DHT22 requires masking interrupts for
+       about 5 ms, because the part encodes its bits as pulse *widths* of 26 us
+       versus 70 us and a task switch mid-bit rewrites the data. Masking
+       interrupts on the ESP32 affects only the calling core, so on core 1 that
+       5 ms costs a few queued CSI frames; on core 0 it would punch a hole in
+       the CSI stream every three seconds.
+
+       Measured after adding all three: 113.6 Hz captured at the node, 108.1 Hz
+       delivered over the encrypted nRF24 link, 95.1% end to end, and ZERO
+       node-side queue drops.
+
+     WHY THE ENVIRONMENT FRAME IS SENT THREE TIMES
+
+       Each reading is transmitted once per second for three seconds, so the
+       Pi gets about three chances at every sample. It discards the repeats by
+       the node's own sample timestamp, so they never reach the history or the
+       display.
+
+       This is not belt-and-braces. Measured: with the CSI stream idle every
+       environment frame arrived, one every 3.2 s, with zero reassembly drops.
+       With CSI running at 100 Hz the radio carries ~500 packets a second, and
+       under that contention roughly TWO IN THREE environment frames were lost
+       -- the panel showed air that was 10 to 12 seconds stale.
+
+       That loss rate is nearly invisible in the CSI stream, where a hundred
+       frames arrive every second and a missing one changes nothing. It is very
+       visible in a frame that only arrives every three seconds.
+
+       Retransmitting costs six extra packets per three seconds against about
+       fifteen hundred -- 0.4% of the link. Spacing the copies a second apart
+       matters, because the loss is bursty: three copies sent back-to-back
+       would be lost together.
+
+       After the change: mean gap 3.0 s, worst 5.3 s, and CSI throughput
+       unchanged at 94 Hz with zero rejected frames.
+
+
+--------------------------------------------------------------------------------
+5.  SETUP FROM SCRATCH
+--------------------------------------------------------------------------------
+
+Already done on this Pi; recorded so it can be rebuilt.
+
+5.1  Python environment  (Debian 13 blocks pip into system Python, PEP 668,
+     so a venv is required; --system-site-packages reuses the apt numpy)
+
+       cd "/home/pi/Desktop/Claude/smart thing"
+       python3 -m venv --system-site-packages .venv
+       ./.venv/bin/pip install scipy fastapi "uvicorn[standard]" websockets \
+                               pyserial cc1101
+
+5.2  Flash the firmware
+
+       cd firmware
+       ~/.local/bin/pio run -t upload --upload-port /dev/ttyUSB0
+
+5.3  Tell the node which WiFi to join  (2.4 GHz only -- the ESP32-S3 cannot
+     see 5 GHz networks)
+
+       cd pi
+       ../.venv/bin/python tools/node.py wifi "YourSSID" "YourPassword"
+
+     Credentials are stored in the ESP32's flash and survive power cycles, so
+     this is a one-time step. No recompile is needed to change networks.
+
+5.4  Autostart at boot
+
+       ./install.sh              server only
+       ./install.sh --kiosk      server plus a full-screen browser on the Pi
+       ./install.sh --uninstall  remove
+
+
+--------------------------------------------------------------------------------
+6.  RUNNING IT
+--------------------------------------------------------------------------------
+
+The service is installed and starts automatically at boot.
+
+    http://localhost:8080          on the Pi
+    http://<pi-address>:8080       from a phone or laptop on the same network
+
+    systemctl status wifisense     is it running
+    journalctl -u wifisense -f     live logs
+    sudo systemctl restart wifisense
+
+Run it by hand instead (stop the service first):
+
+    cd pi
+    ../.venv/bin/python -m wifisense --link serial
+    ../.venv/bin/python -m wifisense --link synthetic   # no hardware needed
+
+Switching transport (needs radios wired to the ESP32 as well as the Pi):
+
+    cd pi
+    ../.venv/bin/python tools/node.py link nrf24     # 2.4 GHz, ch 108 / 2508 MHz
+    ../.venv/bin/python tools/node.py link cc1101    # 433 MHz, out of band
+    ../.venv/bin/python tools/node.py link usb       # back to the cable
+    ../.venv/bin/python tools/node.py radiosweep     # hunt for radios on any pin
+    ../.venv/bin/python tools/node.py radioscan      # probe the documented pins
+
+The choice is stored in the node's flash and survives power cycles. Status and
+log frames always stay on the USB cable regardless, so a node whose radio is
+misconfigured or out of range can still be diagnosed.
+
+Talking to the node directly:
+
+    cd pi
+    ../.venv/bin/python tools/node.py info
+    ../.venv/bin/python tools/node.py monitor 30
+    ../.venv/bin/python tools/node.py wifi "SSID" "password"
+    ../.venv/bin/python tools/node.py mode sniffer
+    ../.venv/bin/python tools/node.py reboot
+
+Environment sensors:
+
+    cd pi
+    ../.venv/bin/python tools/node.py env                # all three, right now
+    ../.venv/bin/python tools/node.py mq135 cal          # baseline the air quality
+    ../.venv/bin/python tools/node.py mq135 supply 3v3   # if AO is wired direct
+    ../.venv/bin/python tools/node.py mq135 supply 5v    # if AO goes via a divider
+
+Both mq135 settings are stored in the node's flash. Changing the supply clears
+the stored baseline, because the resistance scale it was calibrated against has
+just changed and keeping it would leave every reading wrong by a constant
+factor with nothing on screen to say so.
+
+Note: opening the serial port resets the board, so it is unreachable for the
+first few seconds. tools/node.py waits for it; a raw terminal will not.
+
+Checking the signal processing against known ground truth:
+
+    cd pi
+    ../.venv/bin/python tools/validate_dsp.py
+
+This runs the full detector chain against synthetic CSI whose breathing rate
+is known exactly, and is the only way to confirm the numbers are right -- a
+real room cannot tell you whether "14 breaths/min" was correct.
+
+
+--------------------------------------------------------------------------------
+6b. HOW RESPIRATION IS TRACKED  (and three bugs that made it jump around)
+--------------------------------------------------------------------------------
+
+The rate is TRACKED across windows, not re-decided from scratch each time.
+Three faults in the original made the reading unusable, all fixed:
+
+  1. NO CONTINUITY.  A plain argmax over the spectrum picks a fresh winner
+     every window, so whenever two peaks are comparable -- normal for a weak or
+     slightly contaminated signal -- the estimate flips between them.  Measured
+     live it went 8.8 -> 25.5 -> 10.5 bpm in under a minute, which no lung does.
+     Now a peak near the tracked rate keeps the lock unless a rival is clearly
+     stronger (RIVAL_FRAC), and the rate follows by a slow EMA.
+
+  2. NO HYSTERESIS.  Validity was a single threshold on confidence, so as
+     confidence hovered around it the flag chattered on and off every few
+     seconds.  The motion detector had hysteresis from the start for exactly
+     this reason; respiration never got any.  Now VALID_ON/VALID_OFF, plus
+     several windows must agree (AGREE_NEEDED) before anything is published.
+
+  3. TWITCHY CONFIDENCE.  The per-window peak-prominence measure is
+     legitimately noisy -- on a subject sitting perfectly still with a rock
+     steady rate it was seen collapsing 0.36 -> 0.06 and back within seconds.
+     It is now smoothed asymmetrically: quick to rise so a genuine lock
+     publishes promptly, slow to fall so a single bad window cannot tear it
+     down.
+
+  Also: gross motion above RELOCK_MOTION_MAX_DB will confirm an existing rate
+  but never adopt a NEW one, because at that level a limb swing produces a
+  perfectly convincing periodic peak that has nothing to do with breathing.
+  And a brief movement no longer discards the lock -- the subject's rate has
+  not changed just because they shifted in their chair.
+
+  Measured after the fixes, over 90 s: 0 jumps above 3 bpm (was 7), 2 validity
+  flips (was 12).  Held 8.9-10.5 bpm steadily once the subject was still.
+
+  WHAT TO EXPECT: it needs you still and about 30 s.  While you are moving it
+  says "subject moving" and publishes nothing, which is correct -- movement
+  changes the channel by orders of magnitude more than a chest does.
+
+
+--------------------------------------------------------------------------------
+6c. IF BREATHING WILL NOT SHOW  (read this before assuming it is broken)
+--------------------------------------------------------------------------------
+
+Almost every "it won't detect my breathing" case is geometry, not software.
+
+WHERE TO SIT.  The system measures the path BETWEEN the router and the ESP32.
+Sitting NEXT TO the node is the wrong place: you are outside the volume being
+measured, while your small movements are hugely amplified by proximity.  Sit
+BETWEEN the two, ideally near the midpoint.
+
+HOW FAR APART.  Check the RSSI on the dashboard:
+
+    -40 to -60 dBm    the useful working range
+    stronger than -35 dBm   the node is too close to the router
+    weaker than -85 dBm     too little signal
+
+Too strong is a real failure mode, and a counter-intuitive one.  The system
+senses a body by how it perturbs the sum of all paths.  When the direct
+router-to-node path overwhelms everything, your reflection is a tiny fraction
+of the total and gets buried.  Moving the node further from the router
+deliberately weakens the direct path so the reflections -- which is where you
+live -- carry proportionally more of the signal.
+
+HOW STILL.  Watch the MOTION reading, not your own sense of stillness.  Typing,
+shifting in a chair, or a hand on a desk all register.  Respiration needs
+motion below roughly +5 dB.  A recorded session where the subject believed they
+were sitting still measured +12.8 to +14.4 dB throughout, and its spectrum had
+no dominant peak anywhere in the band -- the detector was right to refuse.
+
+WHAT A GOOD LOCK LOOKS LIKE.  motion under +5 dB, vitals above +20 dB, a rate
+that drifts by tenths rather than jumping, and confidence holding above 0.4.
+
+ONE REAL BUG WAS FOUND THIS WAY.  Chest motion does not modulate the channel
+sinusoidally -- at close range the phase swing leaves the small-angle regime and
+the response becomes rich in harmonics.  On a real subject the SEVENTH harmonic
+measured 2.4 dB ABOVE the fundamental, and the old plain-argmax peak picker duly
+reported a rate seven times too fast.  The fundamental is now chosen by
+harmonic summation (score each candidate by the energy at f0, 2*f0, 3*f0 ...),
+which is the standard pitch-detection technique: only the true fundamental has
+all of its multiples lit up, while a harmonic's own multiples land on empty
+spectrum.
+
+
+--------------------------------------------------------------------------------
+6d. AIR QUALITY  --  what the number is, and what it is not
+--------------------------------------------------------------------------------
+
+The dashboard shows an AQI: a 0-500 index with the familiar categories, colours
+and boundaries, computed with the same piecewise-linear breakpoint
+interpolation a real AQI uses.
+
+WHAT IS NOT STANDARD IS THE POLLUTANT, and this matters.
+
+A regulatory AQI -- US EPA, or India's CPCB -- is the worst of several
+sub-indices, and in practice PM2.5 dominates it. The MQ135 CANNOT MEASURE
+PARTICULATES AT ALL. It is a single tin-dioxide resistance that responds to a
+mix of reducing gases. So:
+
+    A SMOKY ROOM CAN STILL READ "GOOD" HERE.
+    A REAL MONITOR WOULD SCORE IT 150-200.
+
+If you want a number that means what an air quality app means, you need a
+particulate sensor -- a PMS5003 or SDS011. Those measure PM2.5 optically and
+would slot into this system the same way these three did.
+
+WHAT THE INDEX IS ACTUALLY BUILT FROM.  The MQ135's resistance is converted to
+a CO2-equivalent ppm, then mapped onto the AQI scale at these breakpoints,
+which are the established indoor ventilation thresholds:
+
+      ppm CO2e        AQI      category
+      ----------      -------  ------------------------------
+        420 -  600      0 - 50  Good              (420 = outdoor air)
+        600 - 1000     51 -100  Moderate
+       1000 - 1500    101 -150  Unhealthy for sensitive groups
+       1500 - 2000    151 -200  Unhealthy
+       2000 - 5000    201 -300  Very unhealthy
+       5000 -10000    301 -500  Hazardous
+
+The raw ppm is always shown under the index for exactly this reason.
+
+WHY IT SOMETIMES SHOWS A GREY "0" AND "BASELINE DRIFTED".
+
+The AQI scale has no values below 0, and the lowest band starts at 420 ppm, so
+anything at or below 420 ppm pins the index to exactly 0.  The scale floor
+and the calibration anchor are deliberately the same number: at 400 a perfectly
+calibrated sensor in genuinely outdoor air read AQI 5 rather than 0, so the
+best reading the instrument can physically produce was not the bottom of its
+own scale.
+
+But a reading below 420 ppm indoors is not clean air -- it is IMPOSSIBLE. The
+outdoor supply is the floor and people only add to it, so indoor CO2 is always
+at or above outdoor. A reading underneath that says nothing about the air and
+everything about the baseline: Rs has drifted above the R0 it was calibrated
+against.
+
+This happens constantly with a new sensor. Measured on this build one hour
+after calibration: Rs climbed from 44,786 to 50,286 ohms -- up 12% -- and the
+reported figure fell from 420 to 305 ppm. Nothing about the room had changed.
+
+So below 378 ppm (10% under outdoor background, leaving room for noise) the
+panel stops showing a reassuring green "Good" and instead greys the number out,
+says "baseline drifted -- recalibrate", and switches the sparkline to plot raw
+ppm rather than the pinned-at-zero index, because the drift is the actual
+story. Showing the sensor's least trustworthy moment as its most reassuring one
+would be the single most misleading thing this panel could do.
+
+The fix is a recalibration once the element has settled -- see below.
+
+CALIBRATION, AND WHY R0 IS NOT A CONSTANT.
+
+Rs falls as gas rises, so the reading is a ratio Rs/R0 against a clean-air
+reference. R0 is measured automatically after 3 minutes of warm-up, by assuming
+the air at that moment is ordinary outdoor background (420 ppm).
+
+A baseline captured once and then frozen DOES NOT WORK, and this build proved
+it the hard way. A new MQ135's element resistance climbs for its first day or
+two of continuous power. Measured here:
+
+    at calibration      Rs 44,786 ohm   ->   420 ppm   AQI   5
+    one hour later      Rs 50,286 ohm   ->   305 ppm   AQI   0
+    two hours later     Rs 57,050 ohm   ->   215 ppm   AQI   0
+
+Nothing about the room changed. The index sat flat at zero and the whole card
+was dead, because the reading had fallen below the bottom of the scale and
+stayed there.
+
+AUTOMATIC BASELINE CORRECTION fixes this, and rests on one physical fact:
+indoor air can never be cleaner than the outdoor air feeding it. Outdoor is the
+floor; occupants only add to it. So if the CLEANEST air seen across a whole
+10-minute window still reads below outdoor background, that is not clean air --
+it is proof the baseline has drifted, and R0 is raised until that cleanest
+sample reads as outdoor again.
+
+This is the same principle commercial NDIR CO2 sensors use. Two deliberate
+design choices in it:
+
+  * The correction is ONE-WAY, upward only. Raising R0 can only make the room
+    look dirtier, so the mechanism can never manufacture a reassuring reading.
+    Lowering it would require knowing the air was genuinely clean, which cannot
+    be known from the sensor alone -- in a continuously occupied room a
+    two-directional tracker walks the baseline down until everything reads
+    "fresh". Downward correction stays a deliberate act: "mq135 cal".
+
+  * It tracks a SMOOTHED resistance, not raw samples. Since the ratchet is
+    permanent, one noisy high sample would raise the baseline for good with
+    nothing able to bring it back.
+
+Set MQ135_ABC_ENABLE to 0 in config.h to switch it off, or change
+MQ135_ABC_WINDOW_S to adjust how quickly it responds.
+
+STILL DO A MANUAL CALIBRATION. Automatic correction keeps the reading on-scale
+and honest; it does not make it accurate, because it can only ever assume the
+cleanest air it has seen was outdoor air. For a real zero, put the node beside
+an open window and run:
+
+    cd pi && ../.venv/bin/python tools/node.py mq135 cal
+
+That treats the air right then as the 420 ppm reference and stores R0 in the
+node's flash, so it survives reboots. Do it again after the sensor has had its
+24-48 hours of initial burn-in.
+
+The "env" command reports how many automatic corrections have been applied:
+
+    mq135=952mV rs=49393 r0=71143 ratio=0.69 ~320ppm abc=0 5v
+                                                        ^^^^^
+
+TEMPERATURE AND HUMIDITY COMPENSATION.  The element's conductivity depends
+strongly on both, which is normally a reason to distrust these sensors, because
+the correction needs measurements the sensor cannot make. Here the DHT22 and
+BMP280 are on the same board, so the correction is actually applied. In a hot,
+humid room it is worth about 16% on Rs -- far from negligible. Set
+MQ135_COMPENSATE to 0 in config.h to use the raw resistance instead.
+
+A BUG WORTH KNOWING ABOUT, because the same trap is waiting in most MQ135 code
+found online. There are TWO different definitions of R0 in circulation:
+
+    * The datasheet's R0 is measured at 100 ppm ammonia. Against it, clean air
+      sits at Rs/R0 ~= 3.6.
+    * The ppm curve constants in general use (A = 116.6, B = 2.769) are fitted
+      against an R0 measured at ATMOSPHERIC CO2.
+
+Calibrating against one and evaluating with the other is self-consistent,
+produces no error, no warning and no obviously broken value -- and is wrong by
+two orders of magnitude. This build did exactly that at first and reported
+4 ppm in ordinary room air. R0 is now derived by inverting the ppm curve at
+420 ppm, which ties both ends to the same convention by construction.
+
+
+--------------------------------------------------------------------------------
+7.  READING THE DASHBOARD
+--------------------------------------------------------------------------------
+
+  BIG WORD          CLEAR / PRESENT / MOVEMENT / ACTIVE / VIGOROUS.
+                    PRESENT means someone is there but not moving -- detected
+                    by their breathing.
+
+  MOTION  (dB)      gross movement. 0 dB is an empty room. Above ~6 dB is real
+                    movement; walking typically reads 20-30 dB.
+
+  VITALS  (dB)      breathing-band energy. This is what sees a still person.
+
+  CHANNEL RESPONSE  the waterfall. Sub-carrier frequency up the side, time
+                    running left to right, colour is signal strength.
+                    Horizontal bands are the room's standing multipath
+                    pattern; vertical streaks are something moving.
+
+  ACTIVITY          both dB readings over the last minute. Dotted lines mark
+                    the thresholds the system is actually deciding on.
+
+  RESPIRATION       breaths per minute, the filtered waveform, and the spectrum
+                    with the chosen peak highlighted. Blank with a flat line
+                    is normal -- it needs a still subject and about 30 seconds.
+
+  ENVIRONMENT       temperature, humidity, pressure and air quality, each with
+                    a half-hour sparkline. The panel only appears once an
+                    environment frame has actually arrived, so a build with no
+                    sensors wired shows a dashboard that looks finished rather
+                    than one full of dashes. A tick or cross per sensor sits in
+                    the panel header.
+
+                    TEMPERATURE shows the BMP280's reading, with both sensors'
+                    figures underneath when both are present. They will
+                    disagree by around a degree and that is expected: the
+                    DHT22's humidity element sits in the same package and
+                    self-heats, so it reads high. The BMP280 is the better
+                    thermometer, which is why it wins.
+
+                    AIR QUALITY is an AQI on the familiar 0-500 scale with the
+                    standard categories and colours, computed by the same
+                    piecewise-linear breakpoint interpolation a real AQI uses.
+                    READ SECTION 6d BEFORE TRUSTING IT -- the pollutant behind
+                    it is not the one a regulatory AQI is based on.
+
+  PACKETS           every frame counter the system keeps, in four groups.
+
+                    Four headline figures: DELIVERED (frames that arrived),
+                    DELIVERY (the percentage that survived the link), LOST IN
+                    TRANSIT and CORRUPTED.
+
+                    Delivery is measured from the sequence number the node
+                    stamps on every CSI frame, so a gap is a frame that
+                    provably left the node and never arrived. That makes it real
+                    loss rather than a slow reader -- unlike a rate estimate,
+                    which cannot tell the two apart.
+
+                    The colour is graded per transport, because "good" is not
+                    the same number on each. A cable is lossless, so anything
+                    under 99% on one means a bad lead. The nRF24 sits at ~88% by
+                    design: a frame is five packets and survives only if all
+                    five do, against a 3-deep hardware FIFO. 88% of 100 Hz is
+                    still four times what respiration needs, so the radio's
+                    green band starts at 80% rather than pretending a documented
+                    normal is a fault.
+
+                    BY FRAME TYPE separates csi / status / environment / log. A
+                    single total cannot tell a link carrying CSI at 100 Hz from
+                    one carrying only status frames once a second; this is the
+                    group that makes a missing stream visible. It is also what
+                    diagnosed the environment panel going blank against a node
+                    running older firmware -- csi and status climbing with
+                    environment stuck at zero.
+
+                    INTEGRITY & FRAMING is CRC, COBS, short and unknown-type
+                    rejects plus resyncs. All should stay at 0; the CRC catches
+                    every corrupted frame, so these degrade the rate rather
+                    than the correctness.
+
+                    RADIO FRAGMENTS & ENCRYPTION appears only on a radio link
+                    and is where frame loss is explained: fragment loss is
+                    normally its cause. Duplicate fragments are auto-ack
+                    retransmissions and are harmless. Note that fragment loss
+                    and LOST IN TRANSIT are the same lost frames counted at two
+                    layers -- do not add them together.
+
+                    NODE, PIPELINE & STIMULUS is the two endpoints. The node's
+                    own counters are the only view of what was *sent* rather
+                    than what survived, which is what localises a fault to the
+                    air rather than to either end. These count from when the
+                    node last booted, not when the server started.
+
+  DIAGNOSTICS       sample rate should sit near 100 Hz. Link errors, dropped
+                    and rejected should all stay at 0.
+
+CALIBRATION takes about 6 seconds for motion and 30 seconds for breathing.
+
+
+--------------------------------------------------------------------------------
+7b. HISTORY AND THE SLEEP REPORT
+--------------------------------------------------------------------------------
+
+    http://<pi-address>:8080/history        (or the HISTORY link in the header)
+
+Everything on the live dashboard is live-only: the motion trace is 60 seconds,
+the environment history half an hour, and a restart throws both away. That is
+right for an instrument, but it means the thing this hardware is uniquely good
+at -- watching a motionless person breathe, through a wall, with nothing worn --
+could never be looked at afterwards. The archive is where that accumulates.
+
+WHAT IS STORED
+
+One row per 10 s holding aggregates over that bucket, not an instantaneous
+sample. CSI arrives at 100 Hz; storing that would be 8.6 million rows a day to
+describe something that moves over minutes. 10 s costs ~8,600 rows a day, which
+SQLite does not notice, and 60 days of it is around 30 MB.
+
+Each row keeps BOTH the mean and the peak of motion_db, and that pairing is the
+point. A 10 s mean hides a one-second movement spike completely -- exactly the
+event that separates "asleep" from "turned over" -- while the peak alone would
+call a single twitch a restless night. On the history page the mean is the line
+and the peak is the lighter band above it.
+
+Environment is sampled once a minute, because the sensor itself only reports
+every 3 s and a room's temperature and CO2 do not move faster than that.
+
+Settings live in pi/config.json: archive_enabled, archive_db,
+archive_interval_s, archive_env_interval_s, archive_retain_days (0 keeps
+everything). A write failure never stops the node sensing -- a full disk
+degrades this feature to nothing and leaves detection untouched.
+
+THE SLEEP REPORT
+
+A night is named by the EVENING it began, so the night of the 13th spans 21:00
+on the 13th to 11:00 on the 14th. Asked in the morning, the page defaults to
+the night that just ended. The window is sleep_window_start_h and
+sleep_window_end_h.
+
+It reports time in bed, still time, restless time, disturbances with their
+times and durations, and breathing rate over the night with min/max and how
+much of the night held a lock.
+
+  * TIME IN BED is the longest occupied stretch, merging absences under 20
+    minutes -- so a trip to the bathroom does not end the night, while an
+    evening on the sofa does not merge into it. An 8 h night broken by a 70 min
+    absence reports the longer 230 min segment, not 480.
+
+  * STILL means gross motion stayed under +5 dB. Not an arbitrary threshold:
+    section 6c establishes that respiration only resolves below roughly +5 dB,
+    so it is the same line the breathing detector already works to.
+
+  * A DISTURBANCE has to last 2 minutes. Below that it is a turn-over, and
+    counting those inflates the number into meaninglessness.
+
+  * Only VALID breathing estimates are averaged. An invalid one carries a bpm
+    of 0.0, and folding those in would drag every night's mean toward zero in
+    proportion to how often the lock dropped.
+
+WHAT IT DELIBERATELY DOES NOT REPORT: SLEEP STAGES.
+
+No REM, no deep, no light. Those are distinguished by brain and eye activity,
+which is not present in this signal at any level -- a radio path through a wall
+measures movement and chest wall motion and nothing else. Every consumer
+device that prints a stage breakdown from movement alone is inferring it from a
+model, not measuring it. This reports stillness, which is what it measures, and
+leaves whether that stillness was sleep to the reader.
+
+It is also not a medical device. It is a bedroom instrument built from a $5
+microcontroller.
+
+A night with no data says so rather than reporting zero sleep, and a period
+under 45 minutes is refused rather than presented as a night.
+
+REST endpoints, if you want the numbers elsewhere:
+
+    /api/history?hours=24&points=900     archived series
+    /api/history/stats                   rows held, span, write errors
+    /api/sleep?night=YYYY-MM-DD          one night's report (default last night)
+    /api/sleep/nights                    which nights hold data
+
+
+--------------------------------------------------------------------------------
+8.  GETTING GOOD RESULTS
+--------------------------------------------------------------------------------
+
+  * Put the ESP32 and the WiFi router on OPPOSITE SIDES of the space you want
+    to watch. You are sensing what happens between them, not around the ESP32.
+    This matters more than anything else.
+
+  * 2 to 8 metres apart works well.
+
+  * A stronger signal is not automatically better. Very close together, the
+    direct path dominates and small changes get lost in it. RSSI around -40 to
+    -60 dBm is a good working range.
+
+  * Breathing detection needs the subject reasonably still and reasonably
+    close, and about 30 seconds of settling.
+
+  * Ceiling fans, moving curtains and pets all register as motion. They are not
+    false positives -- something really is moving.
+
+  * A second ESP32 node would be the single biggest upgrade: it enables the
+    CSI-ratio method, which cancels the oscillator errors that currently make
+    phase unusable, and materially improves breathing sensitivity.
+
+
+--------------------------------------------------------------------------------
+9.  TROUBLESHOOTING
+--------------------------------------------------------------------------------
+
+NO SERIAL DEVICE
+    ls /dev/ttyUSB*
+    Nothing? Try a different USB cable -- charge-only cables are the usual
+    cause. Then check: lsusb | grep -i "silicon labs"
+
+SAMPLE RATE IS ~1 Hz INSTEAD OF ~100 Hz
+    The node is not associated, so the Pi's UDP stimulus cannot reach it.
+        cd pi && ../.venv/bin/python tools/node.py info
+    Look for assoc=yes and an IP. If not:
+      - is the SSID 2.4 GHz? The ESP32-S3 cannot see 5 GHz networks
+      - re-provision: tools/node.py wifi "SSID" "password"
+
+SAMPLE RATE IS 0
+    Check csi=ok in tools/node.py info. If it says FAILED the CSI API was
+    rejected, which usually means a firmware/IDF mismatch -- reflash.
+
+EVERYTHING READS "CLEAR" WITH SOMEONE IN THE ROOM
+    Are the node and the router on opposite sides of that person? If the person
+    is not between them there is little to disturb.
+    Check RSSI is in the -40 to -60 range.
+
+EVERYTHING READS "ACTIVE" IN AN EMPTY ROOM
+    Something is moving: a fan, an open window, a pet. Also check that the
+    node is physically stable -- a board swinging on its cable is motion.
+
+BREATHING NEVER RESOLVES
+    It needs: someone still, 30+ seconds, and a sample rate above ~20 Hz.
+    "subject moving" in the panel means the motion detector is vetoing it,
+    which is correct behaviour rather than a fault.
+
+LINK ERRORS CLIMBING
+    Serial corruption. Try a shorter or better USB cable. The CRC catches every
+    corrupted frame, so this degrades the rate rather than the correctness.
+
+SERVICE WILL NOT START
+    journalctl -u wifisense -n 40
+
+ENVIRONMENT PANEL NEVER APPEARS
+    No environment frame has arrived at all. Ask the node directly:
+        cd pi && ../.venv/bin/python tools/node.py env
+    It reports each sensor separately, so this immediately tells you whether
+    the problem is one sensor or the whole path.
+
+    If the node answers with good readings but the panel still never appears,
+    check the PACKETS panel: csi and status climbing while ENVIRONMENT sits at
+    zero means the frames are arriving and being rejected rather than never
+    being sent.
+
+    That is a wire-format version mismatch. The environment frame grew from 26
+    to 31 bytes when R0 and the automatic-baseline count were added, and a Pi
+    expecting only the longer one discards every frame from a node still
+    running older firmware -- silently, as "short frames", because a truncated
+    payload and an older payload look identical. The Pi now decodes both
+    lengths, reporting r0 and abc as 0 on the legacy format; nothing else is
+    affected, since those two fields are metadata and the AQI does not rest on
+    them. Reflashing the node restores them.
+
+BMP280 = ABSENT
+    The chip id read did not come back. In order of likelihood:
+      - SDO and SDA swapped. In SPI mode SDA is the INPUT and SDO the OUTPUT,
+        which is the opposite of what the I2C-style labels suggest.
+      - CSB not on GPIO15, or left floating.
+      - The module is an I2C-only breakout. Some BMP280 boards tie CSB high on
+        the PCB and never enter SPI mode. Check for a solder jumper.
+
+DHT22 = NO-REPLY
+    An occasional miss is normal and is retried silently; a rising count is
+    not. Check:
+      - a bare 4-pin sensor needs a 10 kOhm pull-up from DATA to 3V3. The
+        3-pin breakout boards already have one.
+      - DATA on GPIO16, VCC on 3V3 not 5V.
+      - some counterfeit AM2302s need >2 s between reads; raise
+        ENV_INTERVAL_MS in config.h to 5000 and see if the count stops rising.
+
+MQ135 = OUT-OF-RANGE
+    The reported millivolts tell you which end it failed at.
+      near 0 mV      AO not connected, or the divider's lower resistor is
+                     shorted to ground
+      near supply    the sensing element is saturated, or AO is wired straight
+                     to 5 V with no divider -- CHECK THIS FIRST, it can damage
+                     the ADC input
+    If the module is powered from 3V3 rather than 5 V, tell the node:
+        python tools/node.py mq135 supply 3v3
+
+AIR QUALITY STUCK AT "WARMING UP"
+    Auto-calibration needs 3 minutes of continuous power AND a valid reading.
+    If the millivolt figure is moving but calibration never happens, the
+    reading is failing its range check -- see the previous entry.
+
+AIR QUALITY SHOWS A GREY 0 AND "BASELINE DRIFTED"
+    The reading has fallen below outdoor background, which is impossible for
+    real air -- the sensor's baseline has drifted above where it calibrated.
+    Normal for the first 24-48 hours of a new sensor. Recalibrate by an open
+    window once it has settled:
+        cd pi && ../.venv/bin/python tools/node.py mq135 cal
+
+AIR QUALITY LOOKS TOO LOW / ALWAYS "GOOD"
+    Expected if it calibrated indoors: the baseline was anchored to whatever
+    the room was at that moment. Recalibrate by an open window:
+        python tools/node.py mq135 cal
+    Also read section 6d -- this index cannot see PM2.5 at all, so it will
+    genuinely read "Good" in a smoky room.
+
+
+--------------------------------------------------------------------------------
+10.  FILE MAP
+--------------------------------------------------------------------------------
+
+  PROJECT.txt                  this file
+  install.sh                   autostart installer
+  systemd/                     service template
+
+  firmware/
+    platformio.ini             board config. qio_opi is required for N16R8.
+    src/config.h               tunables
+    src/main.cpp               CSI capture and framing
+    src/radio_tx.h/.cpp        nRF24 + CC1101 uplink, SPI bus arbitration
+    src/cc1101_driver.h/.cpp   in-tree CC1101 register driver
+    src/bmp280.h/.cpp          in-tree BMP280/BME280 SPI driver
+    src/sensors.h/.cpp         DHT22, MQ135, and the sensor sampling task
+    src/link_crypto.h/.cpp     AES-128-CTR for the radio link
+
+  pi/
+    wifisense/
+      protocol.py              wire format: COBS framing, CRC-16, sub-carrier map
+      stimulus.py              the UDP generator that drives the sample rate
+      config.py                settings, config.json
+      recorder.py              session record/replay
+      archive.py               SQLite long-term store + the sleep report
+      spectrum.py              CC1101 sub-GHz band monitor
+      dsp/
+        csi.py                 raw bytes -> clean amplitude
+        filters.py             ring buffers, band-pass, resampling
+        motion.py              motion and presence, the noise-floor reference
+        breathing.py           respiration estimation
+        pipeline.py            ties the stages together
+      link/
+        serial_link.py         USB transport (the one in use)
+        synthetic.py           physics-based simulator for testing
+        replay.py              replay a recording
+        cc1101_link.py         sub-GHz transport
+        nrf24_link.py          2.4 GHz transport
+      api/server.py            FastAPI, WebSocket, REST
+    web/                       dashboard + history page (no dependencies)
+    tools/
+      node.py                  command-line control of the ESP32
+      validate_dsp.py          correctness tests against known ground truth
+
+  recordings/                  saved sessions, and history.db
+
+
+--------------------------------------------------------------------------------
+11.  MEASURED PERFORMANCE
+--------------------------------------------------------------------------------
+
+  CSI sample rate            100 Hz, 1:1 with the stimulus (200 Hz also works)
+  Serial link errors         0 CRC, 0 framing, over sustained runs
+  Wire rate                  149 bytes/frame, 119 kbit/s (~16% of the link)
+  Pi CPU                     ~20% of one core
+  WebSocket to browser       ~330 kbit/s
+  Empty room                 +1.1 dB motion, +0.0 dB vitals
+  Walking                    +27.8 dB motion
+  Still person breathing     +33.6 dB vitals
+  Breathing accuracy         14.1 bpm measured against 14.0 truth
+                             22.0 bpm measured against 22.0 truth
+
+  With all three environment sensors attached and the radio link carrying CSI:
+
+  Node CSI capture           113.6 Hz
+  Delivered over nRF24       108.1 Hz  (95.1% end to end, AES-128 encrypted)
+  Node-side queue drops      0         -- the sensors cost the CSI path nothing
+  Environment frame          31 bytes payload (26 on firmware predating the R0
+                             and auto-baseline fields), one reading every 3 s,
+                             each transmitted 3x against radio contention
+  Environment freshness      3.0 s mean, 5.3 s worst, under full CSI load
+                             (10.5 s mean / 12.1 s worst before retransmission)
+  BMP280 vs DHT22 agreement  31.5 C vs 31.3 C on independent parts and buses
+  DSP validation             81/81 checks pass (tools/validate_dsp.py)
+  Gas baseline               self-correcting; drifted 27% in 2 h without it
+
+================================================================================

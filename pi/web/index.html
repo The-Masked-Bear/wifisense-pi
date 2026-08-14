@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070a10">
+<title>WiFi Sense</title>
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <span class="dot" id="linkDot"></span>
+    <h1>WiFi&nbsp;Sense</h1>
+    <span class="sub" id="linkName">connecting…</span>
+  </div>
+  <div class="bar-stats">
+    <span class="chip"><b id="statRate">–</b><i>Hz</i></span>
+    <span class="chip"><b id="statRssi">–</b><i>dBm</i></span>
+    <span class="chip hide-sm"><b id="statNode">–</b><i>node</i></span>
+    <a class="ghost hide-sm" href="/history" title="Recorded history and sleep report">HISTORY</a>
+    <button class="ghost" id="btnRecord" title="Record raw session">REC</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ---------------------------------------------------------- hero state -->
+  <section class="panel hero" id="hero">
+    <div class="hero-main">
+      <div class="state" id="stateLabel">CALIBRATING</div>
+      <div class="state-sub" id="stateSub">collecting baseline…</div>
+    </div>
+    <div class="hero-meters">
+      <div class="meter">
+        <div class="meter-head"><span>MOTION</span><b id="motionDb">0.0 dB</b></div>
+        <div class="bar-track"><div class="bar-fill motion" id="motionBar"></div></div>
+      </div>
+      <div class="meter">
+        <div class="meter-head"><span>VITALS</span><b id="vitalDb">0.0 dB</b></div>
+        <div class="bar-track"><div class="bar-fill vital" id="vitalBar"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------ waterfall -->
+  <section class="panel grow">
+    <div class="panel-head">
+      <h2>Channel response</h2>
+      <div class="head-right">
+        <span class="legend" id="viewLegend">sub-carrier ↑ · time →</span>
+        <div class="seg" id="viewToggle">
+          <button class="seg-btn on" data-view="2d">2D</button>
+          <button class="seg-btn" data-view="3d">3D</button>
+        </div>
+        <select id="rampSelect" class="mini">
+          <option value="viridis">viridis</option>
+          <option value="inferno">inferno</option>
+          <option value="turbo">turbo</option>
+        </select>
+      </div>
+    </div>
+    <canvas id="waterfall" class="waterfall"></canvas>
+    <canvas id="surface" class="waterfall" hidden></canvas>
+    <p class="axis-note" id="axisNote" hidden>
+      Axes are <b>frequency</b>, <b>time</b> and <b>signal amplitude</b> &mdash; none of them is
+      space. This is the channel response, not a map of the room; a single
+      transmitter/receiver pair carries no direction information. Drag to rotate,
+      double&#8209;click to toggle spin.
+    </p>
+  </section>
+
+  <!-- ------------------------------------------------------------- timeline -->
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Activity</h2>
+      <div class="head-right">
+        <span class="key"><i class="sw motion"></i>motion</span>
+        <span class="key"><i class="sw vital"></i>vitals</span>
+        <span class="legend">dB over noise floor</span>
+      </div>
+    </div>
+    <canvas id="trace" class="trace"></canvas>
+  </section>
+
+  <!-- ------------------------------------------------------------ breathing -->
+  <section class="panel" id="breathPanel">
+    <div class="panel-head">
+      <h2>Respiration</h2>
+      <div class="head-right"><span class="legend" id="breathReason">–</span></div>
+    </div>
+    <div class="breath">
+      <div class="bpm">
+        <div class="bpm-value" id="bpmValue">––</div>
+        <div class="bpm-unit">breaths / min</div>
+        <div class="conf"><div class="conf-fill" id="bpmConf"></div></div>
+      </div>
+      <div class="breath-viz">
+        <canvas id="waveform" class="waveform"></canvas>
+        <canvas id="spectrum" class="spectrum"></canvas>
+        <div class="axis"><span>8</span><span>20</span><span>36 bpm</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------- environment -->
+  <section class="panel grow" id="envPanel" hidden>
+    <div class="panel-head">
+      <h2>Environment</h2>
+      <div class="head-right">
+        <span class="legend" id="envSensors">–</span>
+        <span class="legend" id="envAge">–</span>
+      </div>
+    </div>
+    <div class="env">
+      <div class="env-card">
+        <div class="env-head"><span>TEMPERATURE</span><i id="envTempSrc"></i></div>
+        <div class="env-value"><b id="envTemp">––</b><u>°C</u></div>
+        <canvas class="spark" id="sparkTemp"></canvas>
+        <div class="env-foot" id="envTempFoot">–</div>
+      </div>
+      <div class="env-card">
+        <div class="env-head"><span>HUMIDITY</span><i>dht22</i></div>
+        <div class="env-value"><b id="envHum">––</b><u>%</u></div>
+        <canvas class="spark" id="sparkHum"></canvas>
+        <div class="env-foot" id="envHumFoot">–</div>
+      </div>
+      <div class="env-card">
+        <div class="env-head"><span>PRESSURE</span><i>bmp280</i></div>
+        <div class="env-value"><b id="envPress">––</b><u>hPa</u></div>
+        <canvas class="spark" id="sparkPress"></canvas>
+        <div class="env-foot" id="envPressFoot">–</div>
+      </div>
+      <div class="env-card" id="envAirCard">
+        <div class="env-head"><span>AIR QUALITY</span><i>mq135</i></div>
+        <div class="env-value"><b id="envAir">––</b><u>AQI</u></div>
+        <canvas class="spark" id="sparkAir"></canvas>
+        <div class="env-foot" id="envAirFoot">–</div>
+      </div>
+    </div>
+    <p class="axis-note">
+      Temperature and pressure come from the BMP280, humidity from the DHT22.
+      The air quality figure is a <b>gas&#8209;only index</b>: it uses the standard
+      0&ndash;500 AQI scale and category boundaries, but it is computed from the
+      MQ135's CO₂&#8209;equivalent reading alone. A regulatory AQI is dominated by
+      <b>PM2.5</b>, which this sensor cannot measure at all &mdash; so a smoky room
+      can still read <i>Good</i> here. The MQ135 is also a single resistance that
+      responds to alcohol, smoke, ammonia and solvents alike, baselined against
+      whatever the air happened to be at calibration. Trust the direction it
+      moves, not the absolute number.
+    </p>
+  </section>
+
+  <!-- --------------------------------------------------------- sub-GHz scan -->
+  <section class="panel grow" id="specPanel" hidden>
+    <div class="panel-head">
+      <h2>433&nbsp;MHz band</h2>
+      <div class="head-right">
+        <span class="legend" id="specRange">–</span>
+        <span class="legend">frequency &rarr; &middot; time &darr;</span>
+      </div>
+    </div>
+    <div class="spec">
+      <canvas id="specFall" class="specfall"></canvas>
+      <div class="spec-side">
+        <div class="spec-title">ACTIVE NOW</div>
+        <div id="specEvents" class="spec-events"><span class="spec-quiet">band quiet</span></div>
+        <div class="spec-title" style="margin-top:12px">PEAK</div>
+        <div class="spec-peak"><b id="specPeak">–</b><i id="specPeakF"></i></div>
+      </div>
+    </div>
+    <div class="axis" id="specAxis"><span>–</span><span>–</span><span>–</span></div>
+    <p class="axis-note">
+      The CC1101 listens here whenever CSI is travelling over USB or the nRF24.
+      Doorbells, weather stations, car remotes and tyre&#8209;pressure sensors all
+      live in this band. A channel is flagged <b>active</b> when it rises 8&nbsp;dB
+      above its own learned quiet level.
+    </p>
+  </section>
+
+  <!-- -------------------------------------------------------------- packets -->
+  <section class="panel grow" id="pktPanel">
+    <div class="panel-head">
+      <h2>Packets</h2>
+      <div class="head-right">
+        <span class="legend" id="pktSource">–</span>
+        <span class="legend" id="pktWire">–</span>
+      </div>
+    </div>
+
+    <div class="pkt-hero">
+      <div class="pkt-big">
+        <span>DELIVERED</span>
+        <b id="pktTotal">–</b>
+        <i id="pktTotalSub">–</i>
+      </div>
+      <div class="pkt-big">
+        <span>DELIVERY</span>
+        <b id="pktDelivery">–</b>
+        <i id="pktDeliverySub">–</i>
+      </div>
+      <div class="pkt-big">
+        <span>LOST IN TRANSIT</span>
+        <b id="pktLost">–</b>
+        <i id="pktLostSub">–</i>
+      </div>
+      <div class="pkt-big">
+        <span>CORRUPTED</span>
+        <b id="pktBad">–</b>
+        <i id="pktBadSub">–</i>
+      </div>
+    </div>
+
+    <div class="pkt-group">
+      <div class="pkt-title">BY FRAME TYPE</div>
+      <div class="grid" id="pktTypes"></div>
+    </div>
+
+    <div class="pkt-group">
+      <div class="pkt-title">INTEGRITY &amp; FRAMING</div>
+      <div class="grid" id="pktIntegrity"></div>
+    </div>
+
+    <div class="pkt-group" id="pktRadioGroup" hidden>
+      <div class="pkt-title">RADIO FRAGMENTS &amp; ENCRYPTION</div>
+      <div class="grid" id="pktRadio"></div>
+    </div>
+
+    <div class="pkt-group">
+      <div class="pkt-title">NODE, PIPELINE &amp; STIMULUS</div>
+      <div class="grid" id="pktEndpoints"></div>
+    </div>
+
+    <p class="axis-note">
+      <b>Delivery</b> is measured from the sequence number the node stamps on
+      every CSI frame, so a gap is a frame that provably left the node and never
+      arrived &mdash; it is real loss, not a slow reader. <b>Corrupted</b> counts
+      frames that arrived damaged and were rejected by the CRC, which protects
+      correctness at the cost of throughput. On a radio link a single frame is
+      split into several packets and survives only if <i>every</i> packet does,
+      so <b>fragment</b> loss is the usual cause of frame loss; <b>duplicates</b>
+      are auto&#8209;ack retransmissions and are harmless. Counters are cumulative
+      since this server started, except the node's own, which count from when the
+      node last booted.
+    </p>
+  </section>
+
+  <!-- ---------------------------------------------------------------- stats -->
+  <section class="panel">
+    <div class="panel-head"><h2>Diagnostics</h2>
+      <div class="head-right"><button class="ghost" id="btnReset">reset baseline</button></div>
+    </div>
+    <div class="grid" id="diag"></div>
+  </section>
+
+</main>
+
+<script src="/static/js/viz.js"></script>
+<script src="/static/js/surface3d.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
