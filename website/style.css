@@ -215,6 +215,96 @@ h1 {
     margin: 0 auto;
 }
 
+/* Support Section */
+.support-section {
+    padding: 100px 5%;
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.support-header h2 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.support-header p {
+    color: var(--text-secondary);
+    margin-bottom: 50px;
+}
+
+.support-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.support-card {
+    position: relative;
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 50px 40px;
+    border-radius: 24px;
+    backdrop-filter: blur(10px);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.support-card:hover {
+    transform: translateY(-10px);
+}
+
+.card-glow {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    background: var(--accent-2);
+    filter: blur(80px);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: -1;
+}
+
+.support-card:hover .card-glow {
+    opacity: 0.3;
+}
+
+.support-icon {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    animation: float 6s ease-in-out infinite;
+}
+
+.support-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+}
+
+.support-card p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 30px;
+    flex-grow: 1;
+}
+
+.price {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--accent-1);
+    margin-bottom: 25px;
+}
+
+.w-full {
+    width: 100%;
+    display: block;
+}
+
 .feature-card {
     background: var(--card-bg);
     border: 1px solid rgba(255,255,255,0.05);
