@@ -26,5 +26,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 # Default to the synthetic link so the container runs out-of-the-box with no hardware.
 # To run with real hardware over USB:
-#   docker run --device /dev/ttyUSB0 -p 8080:8080 ghcr.io/apexacer/wifisense-pi python -m wifisense --link serial
+#   docker run --device /dev/ttyUSB0 -p 8080:8080 ghcr.io/the-masked-bear/wifisense-pi python -m wifisense --link serial
 CMD ["python", "-m", "wifisense", "--link", "synthetic"]

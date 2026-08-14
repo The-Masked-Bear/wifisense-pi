@@ -1,9 +1,9 @@
 # WiFi Sense
-*by TheMaskedBear?*
+*by The-Masked-Bear*
 
 
-[![validate](https://github.com/ApexAcer/wifisense-pi/actions/workflows/validate.yml/badge.svg)](https://github.com/ApexAcer/wifisense-pi/actions/workflows/validate.yml)
-[![package](https://github.com/ApexAcer/wifisense-pi/actions/workflows/package.yml/badge.svg)](https://github.com/ApexAcer/wifisense-pi/actions/workflows/package.yml)
+[![validate](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/validate.yml/badge.svg)](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/validate.yml)
+[![package](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/package.yml/badge.svg)](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/package.yml)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 **See motion, presence and breathing through walls, using nothing but ordinary
@@ -360,7 +360,7 @@ link, is in [`PROJECT.txt`](PROJECT.txt) section 4.
 ### Step 1 — get the code
 
 ```sh
-git clone https://github.com/ApexAcer/wifisense-pi.git
+git clone https://github.com/The-Masked-Bear/wifisense-pi.git
 cd wifisense-pi
 ```
 
@@ -585,7 +585,7 @@ Longer explanations for every one of these are in
 ### Flash without installing PlatformIO
 
 Every tagged release attaches ready-to-flash binaries — see
-[**Releases**](https://github.com/ApexAcer/wifisense-pi/releases). The merged
+[**Releases**](https://github.com/The-Masked-Bear/wifisense-pi/releases). The merged
 factory image flashes at offset `0x0`:
 
 ```sh
@@ -612,11 +612,11 @@ Images are published to GitHub Container Registry for `linux/amd64` and
 
 ```sh
 # dashboard with no hardware, at http://localhost:8080
-docker run --rm -p 8080:8080 ghcr.io/apexacer/wifisense-pi:latest
+docker run --rm -p 8080:8080 ghcr.io/the-masked-bear/wifisense-pi:latest
 
 # with a real node on the USB cable
 docker run --rm -p 8080:8080 --device /dev/ttyUSB0 \
-    ghcr.io/apexacer/wifisense-pi:latest python -m wifisense --link serial
+    ghcr.io/the-masked-bear/wifisense-pi:latest python -m wifisense --link serial
 ```
 
 ### Radio link security
@@ -701,4 +701,4 @@ reported a breathing rate seven times too fast.
 
 ## License
 
-[Apache-2.0](LICENSE). Copyright 2026 TheMaskedBear?
+[Apache-2.0](LICENSE). Copyright 2026 The-Masked-Bear
