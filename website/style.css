@@ -479,57 +479,12 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
 }
 
 /* ====== CSI FEED ====== */
-.csi-container {
-    background: var(--black);
-    border: 5px solid var(--black);
-    box-shadow: 12px 12px 0px var(--shadow);
-    color: var(--mint);
-    display: flex;
-    flex-direction: column;
-    height: 190px;
-    transform: rotate(1.5deg);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
-}
-.csi-container:hover {
-    transform: rotate(0deg) translate(-5px, -5px) scale(1.02);
-    box-shadow: 20px 20px 0px var(--shadow);
-}
-.csi-header {
-    background: var(--white);
-    color: var(--black);
-    font-family: 'Archivo Black', sans-serif;
-    font-size: 0.8rem;
-    padding: 6px 12px;
-    border-bottom: 4px solid var(--black);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.csi-body {
-    padding: 12px;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    line-height: 1.4;
-    overflow: hidden;
-    overflow-anchor: none; /* PREVENT SCROLL GLITCHING */
-    display: flex;
-    flex-direction: column; /* Top down is safer for fixed heights */
-    height: 150px; /* FIXED HEIGHT prevents layout thrashing */
-    max-height: 150px;
-    flex: none;
-}
-.csi-line {
-    margin: 0;
-    opacity: 0.6;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.csi-line:first-child {
-    opacity: 1;
-    color: var(--white);
-    font-weight: bold;
-}
+
+
+
+
+
+
 
 
 
@@ -577,22 +532,15 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
     
     .logo { font-size: 1.4rem !important; text-align: center; }
     .logo-by { display: block; margin-left: 0; margin-top: 5px; }
-    .csi-container { min-width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }
-    .csi-line { white-space: pre-wrap; word-break: break-all; } /* Prevent long string overflow */
+    
+     /* Prevent long string overflow */
 
     
     /* Bulletproof Mobile Hero Stacking */
     .hero-content > div[style*="display: flex"] {
         display: block !important;
     }
-    .csi-container, .giant-text-block {
-        display: block !important;
-        width: 100% !important;
-        min-width: unset !important;
-        margin-bottom: 30px !important;
-        transform: none !important; /* Strip rotation to prevent bounding box collisions */
-        height: auto !important;
-    }
+    
     
     /* Guarantee Visibility - Bypass Observer on Mobile */
     .reveal {
@@ -607,11 +555,7 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
     }
 
     /* 2. Force Hero elements to stack vertically */
-    .csi-container, .giant-text-block {
-        min-width: 100% !important;
-        flex-basis: 100% !important;
-        margin-bottom: 20px;
-    }
+    
     
     .giant-text-block {
         font-size: 2rem !important;
@@ -679,18 +623,68 @@ body.radar-sweep-active::after {
 
 
 /* ====== AGGRESSIVE TOUCH SCROLL FIXES ====== */
-.csi-container {
-    touch-action: pan-y !important; /* Force browser to always allow vertical scrolling */
-}
 
-.csi-body {
-    pointer-events: none !important; /* Prevent inner text from absorbing touch gestures */
-}
+
+
 
 @media (max-width: 768px) {
     /* Disable hover transform on mobile so tapping doesn't cause a layout jitter */
-    .csi-container:hover, .csi-container:active {
+    
+}
+
+.csi-container {
+    background: var(--black);
+    border: 5px solid var(--black);
+    box-shadow: 12px 12px 0px var(--shadow);
+    width: 100%;
+    height: 220px;
+    overflow: hidden;
+    position: relative;
+    transform: rotate(1.5deg);
+}
+
+.csi-header {
+    background: var(--white);
+    color: var(--black);
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    border-bottom: 4px solid var(--black);
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
+.csi-body {
+    padding: 12px;
+    padding-top: 50px; /* Make room for absolute header */
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--mint);
+    height: 100%;
+    width: 100%;
+    pointer-events: none !important;
+}
+
+.csi-line {
+    margin: 0;
+    opacity: 0.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.csi-line:first-child {
+    opacity: 1;
+    color: var(--white);
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .csi-container {
         transform: none !important;
-        box-shadow: 12px 12px 0px var(--shadow) !important; 
+        margin-bottom: 30px !important;
     }
 }
