@@ -467,3 +467,200 @@ h1 {
     animation-play-state: paused;
     cursor: crosshair;
 }
+
+/* =========================================
+   EXTENDED HOVER ANIMATIONS — EVERYTHING
+   ========================================= */
+
+/* Logo - Glitch Shake */
+.logo {
+    transition: letter-spacing 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+.logo:hover {
+    letter-spacing: 4px;
+    animation: glitch 0.3s steps(5) forwards;
+}
+@keyframes glitch {
+    0%  { text-shadow: 2px 0 var(--pink), -2px 0 var(--blue); }
+    20% { text-shadow: -3px 0 var(--blue), 3px 0 var(--pink); }
+    40% { text-shadow: 3px 0 var(--pink), -3px 0 var(--mint); }
+    60% { text-shadow: -2px 0 var(--mint), 2px 0 var(--red); }
+    80% { text-shadow: 2px 0 var(--red), -2px 0 var(--yellow); }
+    100% { text-shadow: 0 0 transparent, 0 0 transparent; }
+}
+
+/* V1.0.0 Badge Sticker - Wobble Spin */
+.brutal-sticker {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    cursor: pointer;
+}
+.brutal-sticker:hover {
+    transform: rotate(4deg) scale(1.12);
+    box-shadow: 10px 10px 0px var(--pink);
+}
+
+/* Hero Heading - Color Sweep */
+h1 {
+    transition: text-shadow 0.3s ease;
+}
+h1:hover {
+    text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue);
+    cursor: crosshair;
+}
+
+/* Hero Paragraph - Highlight */
+.brutal-hero p {
+    transition: background 0.3s ease, padding 0.3s ease;
+}
+.brutal-hero p:hover {
+    background: var(--yellow);
+    padding: 8px 16px;
+    border: 3px solid var(--black);
+}
+
+/* Section Headings - Underline Slam */
+.brutal-grid-section h2 {
+    position: relative;
+    display: inline-block;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.brutal-grid-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 0%;
+    height: 8px;
+    background: var(--yellow);
+    border: 2px solid var(--black);
+    transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.brutal-grid-section h2:hover::after {
+    width: 100%;
+}
+.brutal-grid-section h2:hover {
+    transform: scale(1.03);
+}
+
+/* Card Headings - Color Flash */
+.brutal-card h3 {
+    transition: color 0.2s, text-shadow 0.2s;
+}
+.brutal-card:hover h3 {
+    color: var(--red);
+    text-shadow: 2px 2px 0px var(--black);
+}
+
+/* Card Text - Reveal */
+.brutal-card p {
+    transition: color 0.3s ease;
+}
+.brutal-card:hover p {
+    color: var(--black);
+    font-weight: 700;
+}
+
+/* Terminal Lines - Highlight on Hover */
+.term-body p {
+    transition: background 0.15s ease, padding-left 0.15s ease, border-left 0.15s ease;
+    border-left: 0px solid transparent;
+    cursor: pointer;
+}
+.term-body p:hover {
+    background: rgba(255, 222, 89, 0.15);
+    padding-left: 16px;
+    border-left: 4px solid var(--yellow);
+}
+
+/* Terminal Success Line - Pulse */
+.term-success {
+    transition: text-shadow 0.3s ease;
+}
+.term-success:hover {
+    animation: success-pulse 0.8s ease infinite;
+}
+@keyframes success-pulse {
+    0%, 100% { text-shadow: 0 0 8px rgba(178, 255, 158, 0.8); }
+    50% { text-shadow: 0 0 20px rgba(178, 255, 158, 1), 0 0 40px rgba(178, 255, 158, 0.5); }
+}
+
+/* Marquee Stars - Spin */
+.separator {
+    display: inline-block;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.brutal-marquee:hover .separator {
+    animation: star-spin 1s linear infinite;
+}
+@keyframes star-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Footer Title - Neon Glow */
+.footer-title {
+    transition: text-shadow 0.3s ease, letter-spacing 0.3s ease;
+}
+.footer-title:hover {
+    text-shadow: 0 0 10px var(--yellow), 0 0 30px var(--yellow), 0 0 60px var(--yellow);
+    letter-spacing: 6px;
+}
+
+/* Footer Description - Slide */
+.footer-desc {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), letter-spacing 0.3s ease;
+}
+.footer-desc:hover {
+    transform: scale(1.05);
+    letter-spacing: 1px;
+}
+
+/* Footer Social Buttons - SVG Spin on Hover */
+.brutal-footer .brutal-btn svg {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.brutal-footer .brutal-btn:hover svg {
+    transform: rotate(360deg) scale(1.3);
+}
+
+/* Copyright - Easter Egg */
+.copyright {
+    transition: letter-spacing 0.5s ease, opacity 0.3s ease;
+    cursor: default;
+}
+.copyright:hover {
+    letter-spacing: 8px;
+    opacity: 0.5;
+}
+
+/* Navbar - Shadow on Hover */
+.brutal-nav {
+    transition: box-shadow 0.3s ease;
+}
+.brutal-nav:hover {
+    box-shadow: 0 8px 0px var(--black);
+}
+
+/* Sponsor Button in Nav - Extra Wiggle */
+.nav-links .btn-small {
+    position: relative;
+}
+.nav-links .btn-small:hover {
+    animation: wiggle 0.4s ease;
+}
+@keyframes wiggle {
+    0% { transform: translate(4px, 4px) rotate(0deg); }
+    25% { transform: translate(4px, 4px) rotate(3deg); }
+    50% { transform: translate(4px, 4px) rotate(-3deg); }
+    75% { transform: translate(4px, 4px) rotate(2deg); }
+    100% { transform: translate(4px, 4px) rotate(0deg); }
+}
+
+/* Body Grid Background - Pulse on idle */
+body:hover {
+    background-size: 22px 22px;
+}
+body {
+    transition: background-size 0.5s ease;
+}
