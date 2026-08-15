@@ -676,3 +676,21 @@ body.radar-sweep-active::after {
     box-shadow: 0 0 10px var(--red);
     transform: scale(1.2);
 }
+
+
+/* ====== AGGRESSIVE TOUCH SCROLL FIXES ====== */
+.csi-container {
+    touch-action: pan-y !important; /* Force browser to always allow vertical scrolling */
+}
+
+.csi-body {
+    pointer-events: none !important; /* Prevent inner text from absorbing touch gestures */
+}
+
+@media (max-width: 768px) {
+    /* Disable hover transform on mobile so tapping doesn't cause a layout jitter */
+    .csi-container:hover, .csi-container:active {
+        transform: none !important;
+        box-shadow: 12px 12px 0px var(--shadow) !important; 
+    }
+}
