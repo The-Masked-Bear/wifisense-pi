@@ -639,3 +639,37 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
         margin-bottom: 20px;
     }
 }
+
+
+/* ====== EASTER EGGS ====== */
+
+/* 1. Matrix Mode (Konami Code) */
+body.matrix-mode {
+    filter: invert(100%) hue-rotate(180deg) contrast(120%);
+    background: #000;
+}
+body.matrix-mode img, body.matrix-mode canvas {
+    filter: invert(100%) hue-rotate(180deg);
+}
+
+/* 2. Full-Screen Radar Sweep (Logo 5-Click) */
+body.radar-sweep-active::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 999999;
+    background: conic-gradient(from 0deg, transparent 70%, rgba(178, 255, 158, 0.5) 100%);
+    animation: radar-spin 2s linear infinite;
+    mix-blend-mode: multiply;
+}
+@keyframes radar-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 3. Red Dot Hover */
+.term-header .bg-red:hover {
+    box-shadow: 0 0 10px var(--red);
+    transform: scale(1.2);
+}

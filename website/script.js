@@ -326,6 +326,31 @@ if (termInput && termOutput) {
             response.style.marginBottom = '15px';
 
             switch(cmd.toLowerCase()) {
+                case 'bear':
+                    response.innerHTML = `<pre style="font-size:10px; line-height:10px; color:var(--text-primary); font-family:monospace; margin:10px 0;">
+  ʕ·͡ᴥ·ʔ
+ /|__|\
+  "  "  
+ACCESS GRANTED.
+</pre>`;
+                    break;
+                case 'sudo rm -rf /':
+                    response.innerHTML = `<span style="color:var(--red); font-weight:bold; font-size:1.2rem;">CRITICAL WARNING: DELETING FILESYSTEM...</span>`;
+                    setTimeout(() => {
+                        const chunks = document.querySelectorAll('section, header, nav, footer, .brutal-marquee');
+                        chunks.forEach((el, i) => {
+                            setTimeout(() => {
+                                el.style.transition = 'transform 0.2s, opacity 0.2s';
+                                el.style.transform = 'scale(0.5)';
+                                el.style.opacity = '0';
+                                setTimeout(() => el.style.display = 'none', 200);
+                            }, i * 400);
+                        });
+                    }, 1000);
+                    break;
+                case 'ping':
+                    response.innerHTML = `PING 127.0.0.1 (127.0.0.1): 56 data bytes<br>64 bytes from 127.0.0.1: icmp_seq=0 ttl=64 time=0.033 ms<br>64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.041 ms<br>64 bytes from 127.0.0.1: icmp_seq=2 ttl=64 time=0.039 ms`;
+                    break;
                 case 'help':
                     response.innerHTML = `Available commands:<br>- <span style="color:var(--yellow)">whoami</span><br>- <span style="color:var(--yellow)">ls</span><br>- <span style="color:var(--yellow)">clear</span><br>- <span style="color:var(--yellow)">run wifisense</span>`;
                     break;
@@ -356,5 +381,57 @@ if (termInput && termOutput) {
             // Auto scroll to bottom
             termContainer.scrollTop = termContainer.scrollHeight;
         }
+    });
+}
+
+
+/* ====== EASTER EGGS ====== */
+
+// 1. Console Welcome Message
+console.log("%c    ʕ·͡ᴥ·ʔ    WIFI_SENSE IS WATCHING YOU... ", "font-size: 20px; font-weight: 900; color: #111; background: #FFDE59; padding: 20px; border: 4px solid #111;");
+
+// 2. The Konami Code (Matrix Mode)
+let konamiCode = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiPos = 0;
+document.addEventListener('keydown', (e) => {
+    if (e.key === konamiCode[konamiPos]) {
+        konamiPos++;
+        if (konamiPos === konamiCode.length) {
+            document.body.classList.toggle('matrix-mode');
+            konamiPos = 0;
+            console.log("MATRIX MODE INITIATED.");
+        }
+    } else {
+        konamiPos = 0;
+    }
+});
+
+// 3. Logo 5-Click (Radar Sweep Mode)
+let logoClicks = 0;
+let logoTimer;
+const logoEl = document.querySelector('.logo');
+if (logoEl) {
+    logoEl.addEventListener('click', () => {
+        logoClicks++;
+        clearTimeout(logoTimer);
+        if(logoClicks === 5) {
+            document.body.classList.add('radar-sweep-active');
+            setTimeout(() => document.body.classList.remove('radar-sweep-active'), 6000);
+            logoClicks = 0;
+        }
+        logoTimer = setTimeout(() => { logoClicks = 0; }, 1000);
+    });
+}
+
+// 4. Clickable Red Terminal Dot (Closes Window)
+const redDot = document.querySelector('.term-header .bg-red');
+if (redDot) {
+    redDot.style.cursor = 'pointer';
+    redDot.addEventListener('click', () => {
+        const term = document.querySelector('.brutal-terminal');
+        term.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
+        term.style.transform = 'scale(0) rotate(-10deg)';
+        term.style.opacity = '0';
+        setTimeout(() => term.style.display = 'none', 500);
     });
 }
