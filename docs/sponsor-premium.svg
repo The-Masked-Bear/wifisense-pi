@@ -1,51 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="300" height="90" viewBox="0 0 300 90">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF0080" />
-      <stop offset="100%" stop-color="#7928CA" />
-    </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="10" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
-    <style>
-      .btn-glow {
-        fill: url(#bg);
-        rx: 30px;
-        filter: url(#glow);
-        animation: pulse 2.5s ease-in-out infinite alternate;
-        transform-origin: 135px 30px;
-      }
-      .btn-core {
-        fill: url(#bg);
-        rx: 30px;
-      }
-      .text {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 20px;
-        font-weight: 800;
-        fill: #ffffff;
-        letter-spacing: 0.5px;
-      }
-      .icon {
-        font-size: 26px;
-        animation: float 3s ease-in-out infinite;
-        transform-origin: 25px 25px;
-      }
-      @keyframes float {
-        0%, 100% { transform: translateY(0px) scale(1); }
-        50% { transform: translateY(-5px) scale(1.1); }
-      }
-      @keyframes pulse {
-        0% { opacity: 0.5; transform: scale(0.96); }
-        100% { opacity: 1; transform: scale(1.04); }
-      }
-    </style>
-  </defs>
-  <g transform="translate(15, 15)">
-    <rect class="btn-glow" x="0" y="0" width="270" height="60" />
-    <rect class="btn-core" x="0" y="0" width="270" height="60" />
-    <text class="icon" x="20" y="40">❤️</text>
-    <text class="text" x="60" y="38">Support the Creator</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="90" viewBox="0 0 320 90">
+  <style>
+    .box { fill: #FF90E8; stroke: #111; stroke-width: 4px; }
+    .shadow { fill: #111; }
+    .text { font-family: 'Arial Black', Impact, sans-serif; font-size: 22px; fill: #111; text-transform: uppercase; font-weight: 900; }
+    .wrapper { transform-origin: 0 0; animation: bounce 1.5s infinite alternate steps(2); }
+    @keyframes bounce {
+      0% { transform: translate(0px, 0px); }
+      100% { transform: translate(4px, 4px); }
+    }
+  </style>
+  <g transform="translate(10, 10)">
+    <rect class="shadow" x="8" y="8" width="290" height="60" />
+    <g class="wrapper">
+        <rect class="box" x="0" y="0" width="290" height="60" />
+        <text class="text" x="35" y="38">☕ SUPPORT CREATOR</text>
+    </g>
   </g>
 </svg>
