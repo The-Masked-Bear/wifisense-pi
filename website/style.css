@@ -253,7 +253,7 @@ h1 {
 .bento-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: 250px;
+    grid-auto-rows: minmax(250px, auto);
     gap: 20px;
 }
 
