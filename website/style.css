@@ -280,11 +280,12 @@ h1 {
 .span-2 { grid-column: span 2; }
 
 .bento-icon {
-    font-size: 2.5rem;
     position: absolute;
     top: 30px;
     left: 35px;
-    opacity: 0.8;
+    opacity: 0.9;
+    color: var(--accent-1);
+    filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.4));
 }
 
 .bento-card h3 {

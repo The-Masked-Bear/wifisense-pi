@@ -49,28 +49,28 @@
         <div class="bento-grid">
             <!-- Large Card 1 -->
             <div class="bento-card span-2 reveal">
-                <div class="bento-icon">🌊</div>
+                <div class="bento-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
                 <h3>Sub-Millimeter Precision</h3>
                 <p>Because the human body is mostly water, we reflect 2.4GHz signals strongly. By decomposing the sub-carrier covariance to establish a noise floor, the DSP isolates tiny Doppler shifts. A chest moving just 6mm during breathing is perfectly resolved at 0.13–0.7 Hz.</p>
             </div>
             
             <!-- Small Card 1 -->
             <div class="bento-card reveal">
-                <div class="bento-icon">🔒</div>
+                <div class="bento-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
                 <h3>Total Privacy</h3>
                 <p>No optical sensors. Operates in total darkness. Detects presence and movement without capturing identifiable images or audio.</p>
             </div>
 
             <!-- Small Card 2 -->
             <div class="bento-card reveal">
-                <div class="bento-icon">📡</div>
+                <div class="bento-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C3.1 17.3 2 14.8 2 12s1.1-5.3 2.9-7.1"/><path d="M8.4 15.6c-1-1-1.4-2.3-1.4-3.6s.4-2.6 1.4-3.6"/><circle cx="12" cy="12" r="2"/><path d="M15.6 8.4c1 1 1.4 2.3 1.4 3.6s-.4 2.6-1.4 3.6"/><path d="M19.1 4.9C20.9 6.7 22 9.2 22 12s-1.1 5.3-2.9 7.1"/></svg></div>
                 <h3>Encrypted Link</h3>
                 <p>CSI data is routed over an AES-128 encrypted nRF24 radio link to prevent the transfer from corrupting the 2.4GHz measurement band.</p>
             </div>
 
             <!-- Large Card 2 -->
             <div class="bento-card span-2 reveal">
-                <div class="bento-icon">📊</div>
+                <div class="bento-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
                 <h3>Real-time DSP Pipeline</h3>
                 <p>The Raspberry Pi continuously forces a 100Hz UDP stream to the ESP32. It cleans the bytes into amplitude, tracks respiration peaks via harmonic summation, applies hysteresis, and streams a live WebGL 3D waterfall to your browser.</p>
             </div>
