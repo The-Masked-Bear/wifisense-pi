@@ -75,14 +75,12 @@ h1, h2, h3, .logo, .badge, .brutal-marquee, .giant-text-block {
 
 /* Marquee */
 .brutal-marquee {
-    background: var(--white);
     border-bottom: 8px solid var(--black);
     padding: 15px 0;
     overflow: hidden;
     white-space: nowrap;
     display: flex;
     font-size: 1.5rem;
-    color: var(--black);
 }
 
 .marquee-content {
@@ -392,3 +390,4 @@ h1 {
 .delay-1 { transition-delay: 0.1s; }
 .delay-2 { transition-delay: 0.2s; }
 .delay-3 { transition-delay: 0.3s; }
+.color-red { background: var(--red); color: var(--white); }
