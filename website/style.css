@@ -698,3 +698,8 @@ body.dark-mode .brutal-btn.color-blue {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+
+/* Page loader must stay high-contrast regardless of theme */
+body.dark-mode .loader-text { color: #111111; }
+body.dark-mode .loader-bar { border-color: #111111; }
+body.dark-mode .loader-fill { background: #111111; }
