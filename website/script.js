@@ -223,6 +223,7 @@ document.querySelectorAll('.brutal-card').forEach(card => {
     });
     
     card.addEventListener('mouseenter', () => {
+        // Only override transition when hovered so reveal works on load
         card.style.transition = 'transform 0.1s ease-out, box-shadow 0.1s ease-out';
     });
 });
