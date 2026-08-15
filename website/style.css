@@ -653,3 +653,48 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
     .cursor, .cursor-ring, #trail-canvas { display: none; }
     .brutal-btn, .faq-question, .dark-toggle { cursor: pointer; }
 }
+
+/* ====== DARK MODE CONTRAST FIXES ====== */
+/* Bright accent backgrounds keep dark text even in dark mode */
+body.dark-mode .color-yellow,
+body.dark-mode .color-pink,
+body.dark-mode .color-blue,
+body.dark-mode .color-mint,
+body.dark-mode .brutal-marquee,
+body.dark-mode .giant-text-block,
+body.dark-mode .brutal-stats,
+body.dark-mode .brutal-faq,
+body.dark-mode .brutal-faq h2 {
+    color: #111111 !important;
+}
+body.dark-mode .brutal-marquee .separator { color: var(--red) !important; }
+body.dark-mode .brutal-stats .stat-number,
+body.dark-mode .brutal-stats .stat-unit { color: #111111 !important; }
+body.dark-mode .brutal-stats .stat-label { color: #333333 !important; }
+body.dark-mode .brutal-stats .stat-item { border-right-color: #111111; }
+body.dark-mode .footer-title { color: var(--yellow) !important; }
+
+/* Accent-background buttons: force dark text + dark border */
+body.dark-mode .brutal-btn.color-yellow,
+body.dark-mode .brutal-btn.color-pink,
+body.dark-mode .brutal-btn.color-mint,
+body.dark-mode .brutal-btn.color-blue {
+    color: #111111 !important;
+    border-color: #111111;
+}
+
+/* Dark-mode toggle icon sizing (inline SVG) */
+.toggle-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.toggle-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--text-primary);
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
