@@ -507,3 +507,66 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
     .cursor, .cursor-ring, #trail-canvas { display: none; }
     .brutal-btn, .faq-question, .dark-toggle { cursor: pointer; }
 }
+
+/* ====== CSI FEED ====== */
+.csi-container {
+    background: var(--black);
+    border: 5px solid var(--black);
+    box-shadow: 12px 12px 0px var(--shadow);
+    color: var(--mint);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 180px;
+    transform: rotate(1.5deg);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+}
+.csi-container:hover {
+    transform: rotate(0deg) translate(-5px, -5px) scale(1.02);
+    box-shadow: 20px 20px 0px var(--shadow);
+}
+.csi-header {
+    background: var(--white);
+    color: var(--black);
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    border-bottom: 4px solid var(--black);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.csi-body {
+    padding: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column-reverse; /* Bottom up stacking */
+    flex: 1;
+}
+.csi-line {
+    margin: 0;
+    opacity: 0.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.csi-line:first-child {
+    opacity: 1;
+    color: var(--white);
+    font-weight: bold;
+}
+
+/* Update Brutal Card for 3D Magnetic Tilt */
+.brutal-card {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    /* Remove static transition on transform so JS doesn't lag */
+    transition: background-color 0.4s ease, border-color 0.4s ease;
+}
+.brutal-card:hover {
+    z-index: 10;
+    /* Notice: Transform and Box-Shadow are now completely handled by JS */
+}

@@ -68,8 +68,17 @@
                 <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="brutal-btn color-pink">☕ SUPPORT CREATOR</a>
             </div>
             
-            <div class="giant-text-block hover-shake">
-                PURE MATH. ZERO OPTICS.
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 950px; margin-top: 10px;">
+                <div class="giant-text-block hover-shake" style="flex: 1; min-width: 320px; display: flex; align-items: center; justify-content: center; text-align: center; margin-bottom: 0;">
+                    PURE MATH.<br>ZERO OPTICS.
+                </div>
+                <div class="csi-container" style="flex: 1; min-width: 320px;">
+                    <div class="csi-header">
+                        <span class="dot bg-green" style="width:10px; height:10px; border-width:2px;"></span> 
+                        RAW_CSI_STREAM (Tx1_Rx2)
+                    </div>
+                    <div class="csi-body" id="csi-feed"></div>
+                </div>
             </div>
         </div>
     </header>
@@ -135,7 +144,8 @@
         <div class="brutal-terminal reveal">
             <div class="term-header">
                 <span class="dot bg-red"></span><span class="dot bg-yellow"></span><span class="dot bg-green"></span>
-                <span class="term-title">BASH</span>
+                <span class="term-title" style="margin-left: 20px;">BASH</span>
+                <button id="copy-btn" class="brutal-btn color-yellow btn-small" style="margin-left: auto; padding: 4px 12px; font-size: 0.8rem; border-width: 3px; box-shadow: 3px 3px 0px var(--black);">[ COPY ]</button>
             </div>
             <div class="term-body">
                 <p><span style="color: var(--red); font-weight: 900;">></span> <span style="background: var(--yellow); color: var(--black); padding: 0 6px; border: 2px solid var(--black);">git</span> clone https://github.com/The-Masked-Bear/wifisense-pi</p>
