@@ -1,9 +1,4 @@
-/* ====== PAGE LOADER ====== */
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        document.getElementById('page-loader').classList.add('loaded');
-    }, 1400);
-});
+
 
 /* ====== CUSTOM CURSOR ====== */
 const cursor = document.getElementById('cursor');
@@ -252,8 +247,7 @@ if (waveCanvas) {
     // Touch Support for Mobile
     waveCanvas.addEventListener('touchmove', e => {
         handleWaveMove(e.touches[0].clientX, e.touches[0].clientY);
-        // Prevent scrolling while dragging on the canvas
-        e.preventDefault(); 
+
     }, { passive: false });
     waveCanvas.addEventListener('touchend', () => { waveMouse.x = -1000; waveMouse.y = -1000; });
 
