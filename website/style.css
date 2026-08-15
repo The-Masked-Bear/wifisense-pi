@@ -280,9 +280,8 @@ h1 {
 .span-2 { grid-column: span 2; }
 
 .bento-icon {
-    position: absolute;
-    top: 30px;
-    left: 35px;
+    margin-bottom: auto;
+    padding-bottom: 20px;
     opacity: 0.9;
     color: var(--accent-1);
     filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.4));
@@ -303,7 +302,6 @@ h1 {
 @media (max-width: 900px) {
     .bento-grid { grid-template-columns: 1fr; grid-auto-rows: auto; }
     .span-2 { grid-column: span 1; }
-    .bento-card { padding-top: 80px; }
 }
 
 /* Terminal Section */
