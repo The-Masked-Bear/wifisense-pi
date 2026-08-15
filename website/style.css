@@ -486,7 +486,7 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
     color: var(--mint);
     display: flex;
     flex-direction: column;
-    min-height: 150px;
+    height: 190px;
     transform: rotate(1.5deg);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
 }
@@ -511,9 +511,12 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
     font-size: 0.75rem;
     line-height: 1.4;
     overflow: hidden;
+    overflow-anchor: none; /* PREVENT SCROLL GLITCHING */
     display: flex;
-    flex-direction: column-reverse; /* Bottom up stacking */
-    flex: 1;
+    flex-direction: column; /* Top down is safer for fixed heights */
+    height: 150px; /* FIXED HEIGHT prevents layout thrashing */
+    max-height: 150px;
+    flex: none;
 }
 .csi-line {
     margin: 0;

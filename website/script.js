@@ -151,11 +151,15 @@ if (csiFeed) {
         });
         
         line.textContent = `[${numbers.join(', ')}]`;
-        csiFeed.prepend(line);
         
-        // Prevent memory leak
-        if (csiFeed.children.length > 8) {
-            csiFeed.removeChild(csiFeed.lastChild);
+        // HIGH PERFORMANCE DOM UPDATE (Prevents scroll layout thrashing)
+        if (csiFeed.children.length >= 7) {
+            // Remove the last child and reuse it at the top
+            const last = csiFeed.lastElementChild;
+            last.textContent = line.textContent;
+            csiFeed.insertBefore(last, csiFeed.firstElementChild);
+        } else {
+            csiFeed.insertBefore(line, csiFeed.firstElementChild);
         }
     }, 120); // Extremely fast updates (120ms) to look like real stream
 }
