@@ -577,6 +577,32 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
     .csi-container { min-width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; }
     .csi-line { white-space: pre-wrap; word-break: break-all; } /* Prevent long string overflow */
 
+    
+    /* Bulletproof Mobile Hero Stacking */
+    .hero-content > div[style*="display: flex"] {
+        display: block !important;
+    }
+    .csi-container, .giant-text-block {
+        display: block !important;
+        width: 100% !important;
+        min-width: unset !important;
+        margin-bottom: 30px !important;
+        transform: none !important; /* Strip rotation to prevent bounding box collisions */
+        height: auto !important;
+    }
+    
+    /* Guarantee Visibility - Bypass Observer on Mobile */
+    .reveal {
+        opacity: 1 !important;
+        transform: translate(0,0) !important;
+        transition: none !important;
+    }
+    
+    /* Fix missing card spacing */
+    .brutal-card {
+        margin-bottom: 20px;
+    }
+
     /* 2. Force Hero elements to stack vertically */
     .csi-container, .giant-text-block {
         min-width: 100% !important;
