@@ -433,15 +433,15 @@ if (termInput && termOutput) {
        _,met$$$$$gg.          <span style="color:var(--white)">guest@wifisense</span>
     ,g$$$$$$$$$$$$$$$P.       <span style="color:var(--white)">---------------</span>
   ,g$$P"     """Y$$.".        <span style="color:var(--white)">OS:</span> Debian GNU/Linux 11 aarch64
- ,$$P'              `$$$.     <span style="color:var(--white)">Host:</span> Raspberry Pi 4 Model B
-',$$P       ,ggs.     `$$b:   <span style="color:var(--white)">Kernel:</span> 6.1.21-v8+
-`d$$'     ,$P"'   .    $$$    <span style="color:var(--white)">Uptime:</span> 1337 days
+ ,$$P'              \`$$$.     <span style="color:var(--white)">Host:</span> Raspberry Pi 4 Model B
+',$$P       ,ggs.     \`$$b:   <span style="color:var(--white)">Kernel:</span> 6.1.21-v8+
+\`d$$'     ,$P"'   .    $$$    <span style="color:var(--white)">Uptime:</span> 1337 days
  $$P      d$'     ,    $$P    <span style="color:var(--white)">Packages:</span> 420 (dpkg)
  $$:      $$.   -    ,d$$'    <span style="color:var(--white)">Shell:</span> bash 5.1.4
  $$;      Y$b._   _,d$P'      <span style="color:var(--white)">Terminal:</span> brutal-term
- Y$$.    `.`"Y$$$$P"'         <span style="color:var(--white)">CPU:</span> BCM2835 (4) @ 1.5GHz
- `$$b      "-.__              <span style="color:var(--white)">Memory:</span> 842MiB / 3804MiB
-  `Y$$
+ Y$$.    \`.\`"Y$$$$P"'         <span style="color:var(--white)">CPU:</span> BCM2835 (4) @ 1.5GHz
+ \`$$b      "-.__              <span style="color:var(--white)">Memory:</span> 842MiB / 3804MiB
+  \`Y$$
 </pre>`;
                     break;
                 case 'run':
