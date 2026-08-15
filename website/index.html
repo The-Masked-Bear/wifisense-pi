@@ -25,25 +25,29 @@
         </div>
     </div>
 
-    <header class="brutal-hero">
-        <div class="badge brutal-sticker">V1.0.0 RELEASE</div>
-        <h1>SEE THROUGH SOLID WALLS WITH A $5 CHIP.</h1>
-        <p>WiFi Sense extracts raw 802.11 CSI to detect human motion and respiration. No cameras. No radar. Just radio waves.</p>
-        
-        <div class="cta-group">
-            <a href="https://github.com/The-Masked-Bear/wifisense-pi" class="brutal-btn color-white">GET THE CODE</a>
-            <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="brutal-btn color-pink">☕ SUPPORT CREATOR</a>
-        </div>
-
-        <div class="hero-image-box">
-            <img src="dashboard.webp" alt="WiFi Sense Dashboard">
+    <!-- FULL WIDTH COLOR BLOCKS TO KILL WHITE SPACE -->
+    <header class="brutal-hero color-yellow section-block">
+        <div class="hero-content">
+            <div class="badge brutal-sticker">V1.0.0 RELEASE</div>
+            <h1>SEE THROUGH SOLID WALLS WITH A $5 CHIP.</h1>
+            <p>WiFi Sense extracts raw 802.11 CSI to detect human motion and respiration. No cameras. No radar. Just radio waves.</p>
+            
+            <div class="cta-group">
+                <a href="https://github.com/The-Masked-Bear/wifisense-pi" class="brutal-btn color-white">GET THE CODE</a>
+                <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="brutal-btn color-pink">☕ SUPPORT CREATOR</a>
+            </div>
+            
+            <!-- Replaced the ugly image with a massive typography block -->
+            <div class="giant-text-block">
+                PURE MATH. ZERO OPTICS.
+            </div>
         </div>
     </header>
 
-    <section class="brutal-grid-section">
+    <section class="brutal-grid-section color-pink section-block">
         <h2>ENGINEERING AT THE EDGE</h2>
         <div class="brutal-grid">
-            <div class="brutal-card color-blue span-2">
+            <div class="brutal-card color-white span-2">
                 <h3>🌊 SUB-MILLIMETER</h3>
                 <p>Isolates tiny Doppler shifts. A chest moving just 6mm during breathing is perfectly resolved at 0.13–0.7 Hz.</p>
             </div>
@@ -58,14 +62,14 @@
                 <p>CSI data is routed over an AES-128 encrypted nRF24 radio link to prevent measurement corruption.</p>
             </div>
 
-            <div class="brutal-card color-pink span-2">
+            <div class="brutal-card color-blue span-2">
                 <h3>📊 REAL-TIME DSP</h3>
                 <p>100Hz UDP stream pushed to the ESP32. Raspberry Pi handles filtering, peak picking, and a live WebGL dashboard.</p>
             </div>
         </div>
     </section>
 
-    <section class="brutal-terminal-section">
+    <section class="brutal-terminal-section color-blue section-block">
         <div class="brutal-terminal">
             <div class="term-header">
                 <span class="dot bg-red"></span><span class="dot bg-yellow"></span><span class="dot bg-green"></span>
@@ -81,9 +85,9 @@
         </div>
     </section>
 
-    <footer class="brutal-footer color-blue">
-        <h2>KEEP IT ALIVE</h2>
-        <p>If this project helped you, consider supporting its continuous development.</p>
+    <footer class="brutal-footer color-black section-block">
+        <h2 class="footer-title">KEEP IT ALIVE</h2>
+        <p class="footer-desc">If this project helped you, consider supporting its continuous development.</p>
         <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="brutal-btn color-yellow">BUY ME A COFFEE</a>
         <p class="copyright">BUILT BY THE-MASKED-BEAR. APACHE-2.0 LICENSE.</p>
     </footer>
