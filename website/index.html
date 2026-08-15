@@ -110,6 +110,16 @@
     </section>
 
     <!-- GRID -->
+    
+    <!-- INTERACTIVE WAVEFORM -->
+    <section class="brutal-wave-section section-block">
+        <h2 style="text-align:center; font-size:2.5rem; margin-bottom:10px; color:var(--text-primary); font-family:'Archivo Black', sans-serif;">LIVE CSI INTERFERENCE</h2>
+        <p style="text-align:center; margin-bottom:40px; color:var(--text-secondary);">Hover your mouse over the radar field to distort the WiFi subcarriers in real-time.</p>
+        <div style="max-width:1200px; margin:0 auto; padding:0 5%; padding-bottom:100px;">
+            <canvas id="wifi-wave-canvas" style="width:100%; height:300px; background:var(--black); border:5px solid var(--black); box-shadow:12px 12px 0px var(--shadow); cursor:crosshair;"></canvas>
+        </div>
+    </section>
+
     <section class="brutal-grid-section section-block">
         <h2>ENGINEERING AT THE EDGE</h2>
         <div class="brutal-grid">
@@ -147,12 +157,19 @@
                 <span class="term-title" style="margin-left: 20px;">BASH</span>
                 <button id="copy-btn" class="brutal-btn color-yellow btn-small" style="margin-left: auto; padding: 4px 0; width: 100px; text-align: center; font-size: 0.8rem; border-width: 3px; box-shadow: 3px 3px 0px var(--black);">[ COPY ]</button>
             </div>
-            <div class="term-body">
-                <p><span style="color: var(--red); font-weight: 900;">></span> <span style="background: var(--yellow); color: var(--black); padding: 0 6px; border: 2px solid var(--black);">git</span> clone https://github.com/The-Masked-Bear/wifisense-pi</p>
-                <p><span style="color: var(--red); font-weight: 900;">></span> <span style="background: var(--yellow); color: var(--black); padding: 0 6px; border: 2px solid var(--black);">cd</span> wifisense-pi && python3 -m venv .venv</p>
-                <p><span style="color: var(--red); font-weight: 900;">></span> ./.venv/bin/pip install -r requirements.txt</p>
-                <p><span style="color: var(--red); font-weight: 900;">></span> <span style="background: var(--yellow); color: var(--black); padding: 0 6px; border: 2px solid var(--black);">cd</span> pi && ../.venv/bin/python -m wifisense --link synthetic</p>
-                <p class="term-success">> DASHBOARD LIVE ON PORT 8080</p>
+            <div class="term-body" id="term-container" style="max-height: 400px; overflow-y: auto;">
+                <div id="term-output">
+                    <p><span style="color: var(--red); font-weight: 900;">></span> <span style="background: var(--yellow); color: var(--black); padding: 0 6px; border: 2px solid var(--black);">git</span> clone https://github.com/The-Masked-Bear/wifisense-pi</p>
+                    <p><span style="color: var(--red); font-weight: 900;">></span> <span style="background: var(--yellow); color: var(--black); padding: 0 6px; border: 2px solid var(--black);">cd</span> wifisense-pi && python3 -m venv .venv</p>
+                    <p><span style="color: var(--red); font-weight: 900;">></span> ./.venv/bin/pip install -r requirements.txt</p>
+                    <p><span style="color: var(--red); font-weight: 900;">></span> <span style="background: var(--yellow); color: var(--black); padding: 0 6px; border: 2px solid var(--black);">cd</span> pi && ../.venv/bin/python -m wifisense --link synthetic</p>
+                    <p class="term-success">> DASHBOARD LIVE ON PORT 8080</p>
+                    <p style="opacity: 0.6; margin-top: 20px;">System loaded. Type 'help' for available commands.</p>
+                </div>
+                <div class="term-input-line" style="display:flex; align-items:center; margin-top:5px;">
+                    <span style="color: var(--red); font-weight: 900; margin-right:8px;">></span>
+                    <input type="text" id="term-input" autocomplete="off" spellcheck="false" style="background:transparent; border:none; color:var(--text-primary); font-family:'Space Mono', monospace; font-size:0.95rem; outline:none; flex:1; width:100%; box-shadow:none;">
+                </div>
             </div>
         </div>
     </section>

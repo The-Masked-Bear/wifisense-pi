@@ -560,3 +560,35 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
 
 
 
+
+/* ====== TERMINAL EASTER EGG ====== */
+.brutal-terminal.terminal-hacked {
+    animation: hack-glitch 0.2s linear infinite;
+    box-shadow: 15px 15px 0px var(--mint) !important;
+    border-color: var(--mint) !important;
+}
+.brutal-terminal.terminal-hacked .term-body {
+    background: #001100 !important;
+    color: var(--mint) !important;
+}
+.brutal-terminal.terminal-hacked .term-header {
+    background: var(--mint) !important;
+}
+.brutal-terminal.terminal-hacked .term-title {
+    color: var(--black) !important;
+}
+.brutal-terminal.terminal-hacked input {
+    color: var(--mint) !important;
+}
+@keyframes hack-glitch {
+    0% { transform: translate(2px, 2px); }
+    25% { transform: translate(-2px, -2px); }
+    50% { transform: translate(-2px, 2px); }
+    75% { transform: translate(2px, -2px); }
+    100% { transform: translate(0, 0); }
+}
+
+/* Custom Scrollbar for Terminal */
+#term-container::-webkit-scrollbar { width: 8px; }
+#term-container::-webkit-scrollbar-track { background: var(--bg); border-left: 2px solid var(--black); }
+#term-container::-webkit-scrollbar-thumb { background: var(--mint); border: 2px solid var(--black); }

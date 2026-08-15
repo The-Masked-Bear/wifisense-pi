@@ -227,3 +227,132 @@ document.querySelectorAll('.brutal-card').forEach(card => {
         card.style.transition = 'transform 0.1s ease-out, box-shadow 0.1s ease-out';
     });
 });
+
+/* ====== INTERACTIVE WAVEFORM CANVAS ====== */
+const waveCanvas = document.getElementById('wifi-wave-canvas');
+if (waveCanvas) {
+    const ctx = waveCanvas.getContext('2d');
+    let width = waveCanvas.offsetWidth;
+    let height = waveCanvas.offsetHeight;
+    waveCanvas.width = width;
+    waveCanvas.height = height;
+    
+    let waveMouse = { x: -1000, y: -1000 };
+
+    waveCanvas.addEventListener('mousemove', e => {
+        const rect = waveCanvas.getBoundingClientRect();
+        waveMouse.x = e.clientX - rect.left;
+        waveMouse.y = e.clientY - rect.top;
+    });
+    waveCanvas.addEventListener('mouseleave', () => {
+        waveMouse.x = -1000;
+        waveMouse.y = -1000;
+    });
+
+    let time = 0;
+    function drawWaves() {
+        ctx.fillStyle = '#111111'; // Always black brutalist background
+        ctx.fillRect(0, 0, width, height);
+
+        const waves = [
+            { y: height * 0.3, color: '#FF90E8', freq: 0.02, amp: 20, speed: 0.05 },
+            { y: height * 0.5, color: '#8CFFFB', freq: 0.015, amp: 30, speed: 0.04 },
+            { y: height * 0.7, color: '#B2FF9E', freq: 0.025, amp: 15, speed: 0.06 },
+        ];
+
+        waves.forEach(w => {
+            ctx.beginPath();
+            ctx.moveTo(0, w.y);
+            for (let x = 0; x < width; x += 5) {
+                let y = w.y + Math.sin(x * w.freq + time * w.speed) * w.amp;
+
+                // Human Interference Logic
+                const dx = x - waveMouse.x;
+                const dy = y - waveMouse.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < 180) {
+                    const interference = (180 - dist) / 180; // 0 to 1 intensity
+                    y += (Math.random() - 0.5) * 60 * interference; // Raw noise
+                    y += Math.sin(x * 0.4 + time * 2) * 30 * interference; // High freq distortion
+                }
+
+                ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = w.color;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        });
+
+        time += 1;
+        requestAnimationFrame(drawWaves);
+    }
+    drawWaves();
+
+    window.addEventListener('resize', () => {
+        width = waveCanvas.offsetWidth;
+        height = waveCanvas.offsetHeight;
+        waveCanvas.width = width;
+        waveCanvas.height = height;
+    });
+}
+
+/* ====== FULLY TYPEABLE TERMINAL ====== */
+const termInput = document.getElementById('term-input');
+const termOutput = document.getElementById('term-output');
+const termContainer = document.getElementById('term-container');
+
+if (termInput && termOutput) {
+    // Focus input when clicking anywhere in the terminal body
+    termContainer.addEventListener('click', () => termInput.focus());
+
+    termInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            const cmd = termInput.value.trim();
+            termInput.value = '';
+            if (cmd === '') return;
+
+            // Echo command
+            const echo = document.createElement('p');
+            echo.innerHTML = `<span style="color: var(--red); font-weight: 900;">></span> ${cmd}`;
+            termOutput.appendChild(echo);
+
+            // Process command
+            const response = document.createElement('p');
+            response.style.opacity = '0.8';
+            response.style.marginTop = '5px';
+            response.style.marginBottom = '15px';
+
+            switch(cmd.toLowerCase()) {
+                case 'help':
+                    response.innerHTML = `Available commands:<br>- <span style="color:var(--yellow)">whoami</span><br>- <span style="color:var(--yellow)">ls</span><br>- <span style="color:var(--yellow)">clear</span><br>- <span style="color:var(--yellow)">run wifisense</span>`;
+                    break;
+                case 'whoami':
+                    response.textContent = 'guest@wifisense-pi';
+                    break;
+                case 'ls':
+                    response.innerHTML = `README.md &nbsp;&nbsp; src/ &nbsp;&nbsp; data/ &nbsp;&nbsp; <span style="color:var(--mint)">wifisense.py</span>`;
+                    break;
+                case 'clear':
+                    termOutput.innerHTML = '';
+                    return; // Avoid appending empty response
+                case 'run wifisense':
+                    response.innerHTML = `<span style="color:var(--mint); font-weight:bold;">INITIATING CSI CAPTURE...</span><br>Bypassing optics... [OK]<br>Decrypting stream... [OK]<br>Target Acquired.`;
+                    
+                    // Easter Egg Hack Animation
+                    const terminalBox = document.querySelector('.brutal-terminal');
+                    terminalBox.classList.add('terminal-hacked');
+                    setTimeout(() => {
+                        terminalBox.classList.remove('terminal-hacked');
+                    }, 4000);
+                    break;
+                default:
+                    response.textContent = `bash: ${cmd}: command not found`;
+            }
+            termOutput.appendChild(response);
+
+            // Auto scroll to bottom
+            termContainer.scrollTop = termContainer.scrollHeight;
+        }
+    });
+}
