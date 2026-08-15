@@ -4,15 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WIFI SENSE | NEO-BRUTALISM</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23FFDE59' rx='12'/%3E%3Ctext x='50' y='72' font-family='Arial Black' font-size='60' font-weight='900' text-anchor='middle' fill='%23111'%3EW%3C/text%3E%3C/svg%3E">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="WiFi Sense — See Through Walls With a $5 Chip">
+    <meta property="og:description" content="Open-source WiFi CSI sensing on Raspberry Pi. Detect human motion and breathing through solid walls using raw 802.11 channel state information. No cameras. No radar. Just radio waves.">
+    <meta property="og:url" content="https://the-masked-bear.github.io/wifisense-pi/">
+    <meta property="og:site_name" content="WiFi Sense by The-Masked-Bear">
+    <meta property="og:image" content="https://the-masked-bear.github.io/wifisense-pi/og-image.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="WiFi Sense — See Through Walls With a $5 Chip">
+    <meta name="twitter:description" content="Open-source WiFi CSI sensing. Detect motion and breathing through walls. No cameras. Just radio waves.">
+
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
+    <!-- PAGE LOADER -->
+    <div id="page-loader">
+        <div class="loader-text">WIFI_SENSE</div>
+        <div class="loader-bar"><div class="loader-fill"></div></div>
+    </div>
+
+    <!-- CUSTOM CURSOR -->
+    <div id="cursor" class="cursor"></div>
+    <div id="cursor-ring" class="cursor-ring"></div>
+
+    <!-- MOUSE TRAIL -->
+    <canvas id="trail-canvas"></canvas>
+
     <nav class="brutal-nav">
         <div class="logo">WIFI_SENSE <span style="font-size: 0.9rem; color: #888; font-family: 'Space Mono', monospace; text-transform: none; margin-left: 10px; font-weight: bold;">by The-Masked-Bear</span></div>
         <div class="nav-links">
             <a href="https://github.com/The-Masked-Bear/wifisense-pi" target="_blank" class="brutal-link">GITHUB</a>
+            <button id="dark-toggle" class="dark-toggle" aria-label="Toggle dark mode">
+                <span class="toggle-icon">☀️</span>
+            </button>
             <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="brutal-btn color-yellow btn-small">SPONSOR</a>
         </div>
     </nav>
@@ -25,8 +58,8 @@
         </div>
     </div>
 
-    <!-- FULL WIDTH COLOR BLOCKS TO KILL WHITE SPACE -->
-    <header class="brutal-hero section-block">
+    <!-- HERO -->
+    <header class="brutal-hero section-block parallax-layer" data-speed="0.3">
         <div class="hero-content">
             <div class="badge brutal-sticker">V1.0.0 RELEASE</div>
             <h1>SEE THROUGH SOLID WALLS WITH A $5 CHIP.</h1>
@@ -43,6 +76,33 @@
         </div>
     </header>
 
+    <!-- STATS COUNTER -->
+    <section class="brutal-stats section-block color-pink">
+        <div class="stats-grid">
+            <div class="stat-item reveal">
+                <span class="stat-number" data-target="100">0</span>
+                <span class="stat-unit">Hz</span>
+                <span class="stat-label">REFRESH RATE</span>
+            </div>
+            <div class="stat-item reveal delay-1">
+                <span class="stat-number" data-target="6">0</span>
+                <span class="stat-unit">mm</span>
+                <span class="stat-label">CHEST PRECISION</span>
+            </div>
+            <div class="stat-item reveal delay-2">
+                <span class="stat-number" data-target="128">0</span>
+                <span class="stat-unit">bit</span>
+                <span class="stat-label">AES ENCRYPTION</span>
+            </div>
+            <div class="stat-item reveal delay-3">
+                <span class="stat-number" data-target="5">0</span>
+                <span class="stat-unit">W</span>
+                <span class="stat-label">TOTAL POWER</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- GRID -->
     <section class="brutal-grid-section section-block">
         <h2>ENGINEERING AT THE EDGE</h2>
         <div class="brutal-grid">
@@ -72,6 +132,7 @@
         </div>
     </section>
 
+    <!-- TERMINAL -->
     <section class="brutal-terminal-section section-block">
         <div class="brutal-terminal reveal">
             <div class="term-header">
@@ -88,6 +149,63 @@
         </div>
     </section>
 
+    <!-- FAQ ACCORDION -->
+    <section class="brutal-faq section-block">
+        <h2>FAQ</h2>
+        <div class="faq-list">
+            <div class="faq-item reveal">
+                <button class="faq-question">
+                    <span>Are you a Bear?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer"><p>No.</p></div>
+            </div>
+            <div class="faq-item reveal delay-1">
+                <button class="faq-question">
+                    <span>What hardware do I need?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer"><p>An ESP32 microcontroller (~$3), a Raspberry Pi 4 (~$35), and an nRF24L01+ radio module (~$1). Total cost under $40. The ESP32 extracts raw CSI from WiFi frames, the nRF24 relays it encrypted, and the Pi runs all the DSP and the live dashboard.</p></div>
+            </div>
+            <div class="faq-item reveal delay-2">
+                <button class="faq-question">
+                    <span>Does it actually work through walls?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer"><p>Yes. WiFi operates at 2.4 GHz, which penetrates drywall, wood, and most interior building materials. The CSI (Channel State Information) captures how the wireless signal is distorted by objects and movement in the environment, including through walls. Concrete and metal will attenuate the signal but detection is still possible at reduced range.</p></div>
+            </div>
+            <div class="faq-item reveal delay-3">
+                <button class="faq-question">
+                    <span>Can it see what I'm doing?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer"><p>Absolutely not. This is not a camera. WiFi CSI detects <strong>motion and presence only</strong> — it can tell that someone is in a room and whether they are breathing, but it cannot identify who they are, what they look like, or what they are doing. It is fundamentally a motion and vibration sensor, not an imaging system.</p></div>
+            </div>
+            <div class="faq-item reveal">
+                <button class="faq-question">
+                    <span>Is this legal?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer"><p>Yes. WiFi Sense performs entirely passive monitoring of standard 802.11 WiFi signals. It does not inject packets, intercept communications, or decrypt any data. It only analyzes the physical-layer channel state of its own transmitted signals. This is equivalent to measuring signal strength, which all WiFi devices do internally.</p></div>
+            </div>
+            <div class="faq-item reveal delay-1">
+                <button class="faq-question">
+                    <span>How accurate is the breathing detection?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer"><p>The system resolves chest displacement down to approximately 6mm using sub-carrier covariance analysis across 52 OFDM sub-carriers. Normal adult breathing produces 4–12mm of chest movement, well within detection range. The DSP pipeline isolates the 0.13–0.7 Hz respiration band from other motion artifacts.</p></div>
+            </div>
+            <div class="faq-item reveal delay-2">
+                <button class="faq-question">
+                    <span>Is the wireless data encrypted?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer"><p>Yes. All CSI data transmitted over the nRF24L01+ radio link between the ESP32 and the Raspberry Pi is encrypted with AES-128. This prevents anyone from intercepting or tampering with the raw sensor data in transit.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
     <footer class="brutal-footer color-black section-block">
         <h2 class="footer-title">KEEP IT ALIVE</h2>
         <p class="footer-desc">If this project helped you, consider supporting its continuous development.</p>
