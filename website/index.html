@@ -37,8 +37,7 @@
                 <a href="https://debarghya47.gumroad.com/l/tzbkar" data-gumroad-overlay-checkout="true" class="brutal-btn color-pink">☕ SUPPORT CREATOR</a>
             </div>
             
-            <!-- Replaced the ugly image with a massive typography block -->
-            <div class="giant-text-block">
+            <div class="giant-text-block hover-shake">
                 PURE MATH. ZERO OPTICS.
             </div>
         </div>
@@ -47,30 +46,34 @@
     <section class="brutal-grid-section color-pink section-block">
         <h2>ENGINEERING AT THE EDGE</h2>
         <div class="brutal-grid">
-            <div class="brutal-card color-white span-2">
-                <h3>🌊 SUB-MILLIMETER</h3>
+            <div class="brutal-card color-white span-2 reveal">
+                <svg class="brutal-svg color-blue" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                <h3>SUB-MILLIMETER</h3>
                 <p>Isolates tiny Doppler shifts. A chest moving just 6mm during breathing is perfectly resolved at 0.13–0.7 Hz.</p>
             </div>
             
-            <div class="brutal-card color-mint">
-                <h3>🔒 PRIVACY</h3>
+            <div class="brutal-card color-white reveal delay-1">
+                <svg class="brutal-svg color-mint" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <h3>PRIVACY</h3>
                 <p>No optical sensors. Operates in total darkness. Detects presence without capturing images.</p>
             </div>
 
-            <div class="brutal-card color-yellow">
-                <h3>📡 ENCRYPTED</h3>
+            <div class="brutal-card color-white reveal delay-2">
+                <svg class="brutal-svg color-yellow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C3.1 17.3 2 14.8 2 12s1.1-5.3 2.9-7.1"/><path d="M8.4 15.6c-1-1-1.4-2.3-1.4-3.6s.4-2.6 1.4-3.6"/><circle cx="12" cy="12" r="2"/><path d="M15.6 8.4c1 1 1.4 2.3 1.4 3.6s-.4 2.6-1.4 3.6"/><path d="M19.1 4.9C20.9 6.7 22 9.2 22 12s-1.1 5.3-2.9 7.1"/></svg>
+                <h3>ENCRYPTED</h3>
                 <p>CSI data is routed over an AES-128 encrypted nRF24 radio link to prevent measurement corruption.</p>
             </div>
 
-            <div class="brutal-card color-blue span-2">
-                <h3>📊 REAL-TIME DSP</h3>
+            <div class="brutal-card color-white span-2 reveal delay-3">
+                <svg class="brutal-svg color-pink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                <h3>REAL-TIME DSP</h3>
                 <p>100Hz UDP stream pushed to the ESP32. Raspberry Pi handles filtering, peak picking, and a live WebGL dashboard.</p>
             </div>
         </div>
     </section>
 
     <section class="brutal-terminal-section color-blue section-block">
-        <div class="brutal-terminal">
+        <div class="brutal-terminal reveal">
             <div class="term-header">
                 <span class="dot bg-red"></span><span class="dot bg-yellow"></span><span class="dot bg-green"></span>
                 <span class="term-title">BASH</span>
@@ -93,5 +96,6 @@
     </footer>
 
     <script src="https://gumroad.com/js/gumroad.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

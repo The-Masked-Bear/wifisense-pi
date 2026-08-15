@@ -342,3 +342,53 @@ h1 {
     font-size: 1rem !important;
     color: var(--text-secondary);
 }
+
+/* Brutalist SVGs for Cards */
+.brutal-svg {
+    width: 50px;
+    height: 50px;
+    stroke: var(--black);
+    stroke-width: 3px;
+    margin-bottom: 20px;
+    filter: drop-shadow(4px 4px 0px var(--black));
+    background: var(--white);
+    border-radius: 4px;
+}
+.brutal-svg.color-blue { fill: var(--blue); }
+.brutal-svg.color-mint { fill: var(--mint); }
+.brutal-svg.color-yellow { fill: var(--yellow); }
+.brutal-svg.color-pink { fill: var(--pink); }
+
+.brutal-card h3 {
+    border-bottom: 4px solid var(--black);
+    padding-bottom: 10px;
+    display: inline-block;
+}
+
+/* Animations */
+.hover-shake:hover {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    10%, 90% { transform: rotate(1deg) translate3d(-1px, 0, 0); }
+    20%, 80% { transform: rotate(-2deg) translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: rotate(2deg) translate3d(-4px, 0, 0); }
+    40%, 60% { transform: rotate(-2deg) translate3d(4px, 0, 0); }
+}
+
+/* Reveal Animations */
+.reveal {
+    opacity: 0;
+    transform: translate(20px, 20px);
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translate(0, 0);
+}
+
+.delay-1 { transition-delay: 0.1s; }
+.delay-2 { transition-delay: 0.2s; }
+.delay-3 { transition-delay: 0.3s; }
