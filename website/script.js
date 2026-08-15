@@ -239,15 +239,23 @@ if (waveCanvas) {
     
     let waveMouse = { x: -1000, y: -1000 };
 
-    waveCanvas.addEventListener('mousemove', e => {
+    const handleWaveMove = (clientX, clientY) => {
         const rect = waveCanvas.getBoundingClientRect();
-        waveMouse.x = e.clientX - rect.left;
-        waveMouse.y = e.clientY - rect.top;
-    });
-    waveCanvas.addEventListener('mouseleave', () => {
-        waveMouse.x = -1000;
-        waveMouse.y = -1000;
-    });
+        waveMouse.x = clientX - rect.left;
+        waveMouse.y = clientY - rect.top;
+    };
+    
+    // Mouse Support
+    waveCanvas.addEventListener('mousemove', e => handleWaveMove(e.clientX, e.clientY));
+    waveCanvas.addEventListener('mouseleave', () => { waveMouse.x = -1000; waveMouse.y = -1000; });
+    
+    // Touch Support for Mobile
+    waveCanvas.addEventListener('touchmove', e => {
+        handleWaveMove(e.touches[0].clientX, e.touches[0].clientY);
+        // Prevent scrolling while dragging on the canvas
+        e.preventDefault(); 
+    }, { passive: false });
+    waveCanvas.addEventListener('touchend', () => { waveMouse.x = -1000; waveMouse.y = -1000; });
 
     let time = 0;
     function drawWaves() {

@@ -592,3 +592,48 @@ h1:hover { text-shadow: 6px 6px 0px var(--pink), -6px -6px 0px var(--blue); }
 #term-container::-webkit-scrollbar { width: 8px; }
 #term-container::-webkit-scrollbar-track { background: var(--bg); border-left: 2px solid var(--black); }
 #term-container::-webkit-scrollbar-thumb { background: var(--mint); border: 2px solid var(--black); }
+
+/* ====== AGGRESSIVE MOBILE OPTIMIZATIONS ====== */
+@media (max-width: 768px) {
+    /* 1. Reduce massive whitespace */
+    .brutal-hero, .brutal-grid-section, .brutal-terminal-section, .brutal-faq, .brutal-footer, .brutal-wave-section, .brutal-stats {
+        padding-top: 60px !important;
+        padding-bottom: 60px !important;
+    }
+    
+    /* 2. Force Hero elements to stack vertically */
+    .csi-container, .giant-text-block {
+        min-width: 100% !important;
+        flex-basis: 100% !important;
+        margin-bottom: 20px;
+    }
+    
+    .giant-text-block {
+        font-size: 2rem !important;
+        padding: 20px !important;
+    }
+    
+    /* 3. Fix Terminal Header Cramping */
+    .term-header .dot {
+        display: none; /* Hide decorative dots to save space */
+    }
+    .term-title {
+        margin-left: 0 !important;
+    }
+    
+    /* 4. Prevent iOS Input Auto-Zoom */
+    #term-input {
+        font-size: 16px !important;
+    }
+    
+    /* 5. Shrink Canvas */
+    #wifi-wave-canvas {
+        height: 220px !important;
+    }
+    
+    /* 6. Typography scaling */
+    h1 {
+        font-size: clamp(2.5rem, 12vw, 4rem) !important;
+        margin-bottom: 20px;
+    }
+}
