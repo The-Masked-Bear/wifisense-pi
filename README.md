@@ -2,7 +2,7 @@
 *by The-Masked-Bear*
 
 [![Official Website](https://img.shields.io/badge/🌐_Official_Website-Click_Here-000000?style=for-the-badge&logo=github)](https://the-masked-bear.github.io/wifisense-pi)
-[![Sponsor](https://img.shields.io/badge/Sponsor-Gumroad-ff90e8?style=for-the-badge&logo=gumroad&logoColor=black)](https://debarghya47.gumroad.com/l/tzbkar)
+[![Sponsor](https://img.shields.io/badge/Sponsor-Gumroad-ff90e8?style=for-the-badge&logo=gumroad&logoColor=black)]((https://themaskedbear.gumroad.com/l/tzbkar))
 
 
 [![validate](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/validate.yml/badge.svg)](https://github.com/The-Masked-Bear/wifisense-pi/actions/workflows/validate.yml)
